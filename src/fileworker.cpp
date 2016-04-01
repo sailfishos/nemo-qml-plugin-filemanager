@@ -36,13 +36,32 @@
 
 FileWorker::FileWorker(QObject *parent) :
     QThread(parent),
-    m_mode(DeleteMode),
+    m_mode(FileEngine::IdleMode),
     m_cancelled(KeepRunning)
 {
+    connect(this, &FileWorker::finished, this, &FileWorker::handleFinished);
 }
 
 FileWorker::~FileWorker()
 {
+}
+
+void FileWorker::handleFinished()
+{
+    setMode(FileEngine::IdleMode);
+}
+
+FileEngine::Mode FileWorker::mode() const
+{
+    return m_mode;
+}
+
+void FileWorker::setMode(FileEngine::Mode mode)
+{
+    if (m_mode != mode) {
+        m_mode = mode;
+        emit modeChanged();
+    }
 }
 
 void FileWorker::startDeleteFiles(QStringList fileNames)
@@ -55,7 +74,7 @@ void FileWorker::startDeleteFiles(QStringList fileNames)
     if (!validateFileNames(fileNames))
         return;
 
-    m_mode = DeleteMode;
+    setMode(FileEngine::DeleteMode);
     m_fileNames = fileNames;
     m_cancelled.storeRelease(KeepRunning);
     start();
@@ -71,7 +90,8 @@ void FileWorker::startCopyFiles(QStringList fileNames, QString destDirectory)
     if (!validateFileNames(fileNames))
         return;
 
-    m_mode = CopyMode;
+    setMode(FileEngine::CopyMode);
+
     m_fileNames = fileNames;
     m_destDirectory = destDirectory;
     m_cancelled.storeRelease(KeepRunning);
@@ -88,7 +108,8 @@ void FileWorker::startMoveFiles(QStringList fileNames, QString destDirectory)
     if (!validateFileNames(fileNames))
         return;
 
-    m_mode = MoveMode;
+    setMode(FileEngine::MoveMode);
+
     m_fileNames = fileNames;
     m_destDirectory = destDirectory;
     m_cancelled.storeRelease(KeepRunning);
@@ -103,13 +124,16 @@ void FileWorker::cancel()
 void FileWorker::run()
 {
     switch (m_mode) {
-    case DeleteMode:
+    case FileEngine::DeleteMode:
         deleteFiles();
         break;
 
-    case MoveMode:
-    case CopyMode:
+    case FileEngine::MoveMode:
+    case FileEngine::CopyMode:
         copyOrMoveFiles();
+        break;
+    case FileEngine::IdleMode:
+        qmlInfo(this) << "FileWorker run in IdleMode, should not happen";
         break;
     }
 }
@@ -189,7 +213,7 @@ void FileWorker::copyOrMoveFiles()
 
         // move or copy and stop if errors
         QFile file(fileName);
-        if (m_mode == MoveMode) {
+        if (m_mode == FileEngine::MoveMode) {
             if (fileInfo.isSymLink()) {
                 // move symlink by creating a new link and deleting the old one
                 QFile targetFile(fileInfo.symLinkTarget());

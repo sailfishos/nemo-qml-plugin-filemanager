@@ -55,24 +55,27 @@ public:
 
     void cancel();
 
+    FileEngine::Mode mode() const;
+
 signals:
 
     // one of these is emitted when thread ends
     void done();
     void cancelled();
     void error(FileEngine::Error error, QString fileName);
-
     void fileDeleted(QString fullname);
+    void modeChanged();
+
+protected slots:
+    void handleFinished();
 
 protected:
     void run();
 
 private:
-    enum Mode {
-        DeleteMode, CopyMode, MoveMode
-    };
     enum CancelStatus {
-        Cancelled = 0, KeepRunning = 1
+        Cancelled = 0,
+        KeepRunning = 1
     };
 
     bool validateFileNames(const QStringList &fileNames);
@@ -82,8 +85,9 @@ private:
     void copyOrMoveFiles();
     bool copyDirRecursively(QString srcDirectory, QString destDirectory);
     bool copyOverwrite(QString src, QString dest);
+    void setMode(FileEngine::Mode mode);
 
-    FileWorker::Mode m_mode;
+    FileEngine::Mode m_mode;
     QStringList m_fileNames;
     QString m_destDirectory;
     QAtomicInt m_cancelled; // atomic so no locks needed

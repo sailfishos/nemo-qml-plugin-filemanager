@@ -47,8 +47,10 @@ class FileEngine : public QObject
     Q_PROPERTY(int clipboardCount READ clipboardCount NOTIFY clipboardCountChanged)
     Q_PROPERTY(bool clipboardContainsCopy READ clipboardContainsCopy NOTIFY clipboardContainsCopyChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
+    Q_PROPERTY(Mode mode READ mode NOTIFY modeChanged)
 
     Q_ENUMS(Error)
+    Q_ENUMS(Mode)
 public:
     explicit FileEngine(QObject *parent = 0);
     ~FileEngine();
@@ -66,10 +68,18 @@ public:
         ErrorChmodFailed
     };
 
+    enum Mode {
+        IdleMode,
+        DeleteMode,
+        CopyMode,
+        MoveMode
+    };
+
     // properties
     int clipboardCount() const { return m_clipboardFiles.count(); }
     bool clipboardContainsCopy() const { return m_clipboardContainsCopy; }
     bool busy() const;
+    Mode mode() const;
 
     // For C++
     static FileEngine *instance();
@@ -94,6 +104,7 @@ public:
                               bool groupRead, bool groupWrite, bool groupExecute,
                               bool othersRead, bool othersWrite, bool othersExecute);
 
+
 signals:
     void clipboardCountChanged();
     void clipboardContainsCopyChanged();
@@ -102,6 +113,7 @@ signals:
     void fileDeleted(QString fullname);
     void cancelled();
     void busyChanged();
+    void modeChanged();
 
 private:
     QStringList m_clipboardFiles;
