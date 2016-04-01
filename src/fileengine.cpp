@@ -57,6 +57,7 @@ FileEngine::FileEngine(QObject *parent) :
 
     connect(m_fileWorker, &FileWorker::started, this, &FileEngine::busyChanged);
     connect(m_fileWorker, &FileWorker::finished, this, &FileEngine::busyChanged);
+    connect(m_fileWorker, &FileWorker::modeChanged, this, &FileEngine::modeChanged);
 
     connect(m_fileWorker, &FileWorker::fileDeleted, this, &FileEngine::fileDeleted);
 }
@@ -71,6 +72,11 @@ FileEngine::~FileEngine()
 FileEngine *FileEngine::instance()
 {
     return engine();
+}
+
+FileEngine::Mode FileEngine::mode() const
+{
+    return m_fileWorker->mode();
 }
 
 bool FileEngine::busy() const
@@ -140,6 +146,7 @@ void FileEngine::pasteFiles(QString destDirectory)
             emit error(ErrorCannotCopyIntoItself, fileName);
             return;
         }
+
     }
 
     m_clipboardFiles.clear();
