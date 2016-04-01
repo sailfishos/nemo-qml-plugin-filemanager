@@ -147,6 +147,10 @@ void FileEngine::pasteFiles(QString destDirectory)
             return;
         }
 
+        if (QFile::exists(newName)) {
+            emit error(ErrorCopyFailed, fileName);
+            return;
+        }
     }
 
     m_clipboardFiles.clear();
