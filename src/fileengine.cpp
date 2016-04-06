@@ -40,15 +40,12 @@
 #include <QTextStream>
 #include <unistd.h>
 
-Q_GLOBAL_STATIC(FileEngine, engine);
-
 
 FileEngine::FileEngine(QObject *parent) :
     QObject(parent),
     m_clipboardContainsCopy(false)
 {
     m_fileWorker = new FileWorker(this);
-
 
     // pass worker end signals to QML
     connect(m_fileWorker, &FileWorker::done, this, &FileEngine::workerDone);
@@ -67,11 +64,6 @@ FileEngine::~FileEngine()
     // is this the way to force stop the worker thread?
     m_fileWorker->cancel(); // stop possibly running background thread
     m_fileWorker->wait();   // wait until thread stops
-}
-
-FileEngine *FileEngine::instance()
-{
-    return engine();
 }
 
 FileEngine::Mode FileEngine::mode() const

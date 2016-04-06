@@ -41,7 +41,7 @@
 
 static QObject *engine_api_factory(QQmlEngine *, QJSEngine *)
 {
-    return FileEngine::instance();
+    return new FileEngine;
 }
 
 class Q_DECL_EXPORT NemoFileManagerPlugin : public QQmlExtensionPlugin
