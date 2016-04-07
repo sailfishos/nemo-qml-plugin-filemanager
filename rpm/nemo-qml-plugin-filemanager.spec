@@ -10,6 +10,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Test)
+BuildRequires:  libcontacts-qt5
 
 %description
 %{summary}.

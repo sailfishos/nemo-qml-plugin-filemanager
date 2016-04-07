@@ -33,10 +33,13 @@
 #ifndef FILEMODEL_H
 #define FILEMODEL_H
 
+#include "statfileinfo.h"
+
+#include <synchronizelists.h>
+
 #include <QAbstractListModel>
 #include <QDir>
 #include <QFileSystemWatcher>
-#include "statfileinfo.h"
 #include <QMimeDatabase>
 
 /**
@@ -133,6 +136,10 @@ public:
     Q_INVOKABLE void clearSelectedFiles();
     Q_INVOKABLE void selectAllFiles();
     Q_INVOKABLE QStringList selectedFiles() const;
+
+    // For synchronizeList
+    int insertRange(int index, int count, const QList<StatFileInfo> &source, int sourceIndex);
+    int removeRange(int index, int count);
 
 public slots:
     // reads the directory and inserts/removes model items as needed

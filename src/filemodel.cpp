@@ -31,12 +31,14 @@
  */
 
 #include "filemodel.h"
-#include <unistd.h>
+
 #include <QDateTime>
 #include <QDebug>
 #include <QGuiApplication>
 #include <QMimeType>
 #include <QQmlInfo>
+
+#include <unistd.h>
 
 namespace {
 
@@ -470,34 +472,38 @@ void FileModel::refreshEntries()
         return;
     }
 
+    int oldCount = m_files.count();
+
     // read all files
     QList<StatFileInfo> newFiles = directoryEntries(dir);
 
-    int oldCount = m_files.count();
-
-    // compare old and new files and do removes if needed
-    for (int i = m_files.count()-1; i >= 0; --i) {
-        const StatFileInfo &data = m_files.at(i);
-        if (!newFiles.contains(data)) {
-            beginRemoveRows(QModelIndex(), i, i);
-            m_files.removeAt(i);
-            endRemoveRows();
-        }
-    }
-
-    // compare old and new files and do inserts if needed
-    for (int i = 0; i < newFiles.count(); ++i) {
-        const StatFileInfo &data = newFiles.at(i);
-        if (!m_files.contains(data)) {
-            beginInsertRows(QModelIndex(), i, i);
-            m_files.insert(i, data);
-            endInsertRows();
-        }
-    }
+    ::synchronizeList(this, m_files, newFiles);
 
     if (m_files.count() != oldCount)
         emit countChanged();
     recountSelectedFiles();
+}
+
+int FileModel::insertRange(int index, int count, const QList<StatFileInfo> &source, int sourceIndex)
+{
+    beginInsertRows(QModelIndex(), index, index + count - 1);
+
+    for (int i = 0; i < count; ++i)
+        m_files.insert(index + i, source.at(sourceIndex + i));
+
+    endInsertRows();
+    return count;
+}
+
+int FileModel::removeRange(int index, int count)
+{
+    beginRemoveRows(QModelIndex(), index, index + count - 1);
+
+    QList<StatFileInfo>::iterator it = m_files.begin() + index;
+    m_files.erase(it, it + count);
+
+    endRemoveRows();
+    return 0;
 }
 
 void FileModel::clearModel()
