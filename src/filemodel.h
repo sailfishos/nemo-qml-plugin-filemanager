@@ -51,16 +51,36 @@ class FileModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
+    Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
+    Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
+    Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
+    Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeFoldersChanged)
+    Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
 
     Q_ENUMS(Error)
+    Q_ENUMS(Sort)
+    Q_ENUMS(DirectorySort)
 
 public:
     enum Error {
         NoError,
         ErrorReadNoPermissions
+    };
+
+    enum Sort {
+        SortByName,
+        SortByModified,
+        SortBySize,
+        SortByExtension
+    };
+
+    enum DirectorySort {
+        SortDirectoriesWithFiles,
+        SortDirectoriesBeforeFiles,
+        SortDirectoriesAfterFiles
     };
 
     explicit FileModel(QObject *parent = 0);
@@ -74,9 +94,27 @@ public:
     // property accessors
     QString path() const { return m_path; }
     void setPath(QString path);
+
+    Sort sortBy() const { return m_sortBy; }
+    void setSortBy(Sort sortBy);
+
+    Qt::SortOrder sortOrder() const { return m_sortOrder; }
+    void setSortOrder(Qt::SortOrder order);
+
+    Qt::CaseSensitivity caseSensitivity() const { return m_caseSensitivity; }
+    void setCaseSensitivity(Qt::CaseSensitivity sensitivity);
+
+    bool includeDirectories() const { return m_includeDirectories; }
+    void setIncludeDirectories(bool include);
+
+    DirectorySort directorySort() const { return m_directorySort; }
+    void setDirectorySort(DirectorySort sort);
+
     int count() const;
+
     bool active() const { return m_active; }
     void setActive(bool active);
+
     int selectedCount() const { return m_selectedCount; }
 
     // methods accessible from QML
@@ -98,6 +136,11 @@ public slots:
 
 signals:
     void pathChanged();
+    void sortByChanged();
+    void sortOrderChanged();
+    void caseSensitivityChanged();
+    void includeFoldersChanged();
+    void directorySortChanged();
     void countChanged();
     void error(Error error, QString fileName);
     void activeChanged();
@@ -113,11 +156,18 @@ private:
     void clearModel();
     bool filesContains(const QList<StatFileInfo> &files, const StatFileInfo &fileData) const;
 
+    QDir directory() const;
+
     QString m_path;
-    QList<StatFileInfo> m_files;
-    int m_selectedCount;
+    Sort m_sortBy;
+    DirectorySort m_directorySort;
+    Qt::SortOrder m_sortOrder;
+    Qt::CaseSensitivity m_caseSensitivity;
+    bool m_includeDirectories;
     bool m_active;
     bool m_dirty;
+    int m_selectedCount;
+    QList<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QMimeDatabase m_mimeDatabase;
 };

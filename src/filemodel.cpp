@@ -38,6 +38,8 @@
 #include <QMimeType>
 #include <QQmlInfo>
 
+namespace {
+
 enum {
     FileNameRole = Qt::UserRole + 1,
     MimeTypeRole = Qt::UserRole + 2,
@@ -54,14 +56,39 @@ int access(QString fileName, int how)
 {
     QByteArray fab = fileName.toUtf8();
     char *fn = fab.data();
-    return access(fn, how);
+    return ::access(fn, how);
+}
+
+QList<StatFileInfo> directoryEntries(const QDir &dir)
+{
+    QList<StatFileInfo> rv;
+
+    QStringList fileList = dir.entryList();
+    foreach (const QString &fileName, fileList) {
+        if (fileName.startsWith("qt_temp.")) {
+            // Workaround for QFile::copy() creating intermediate qt_temp.* file (see QTBUG-27601)
+            continue;
+        }
+        QString fullpath = dir.absoluteFilePath(fileName);
+        StatFileInfo info(fullpath);
+        rv.append(info);
+    }
+
+    return rv;
+}
+
 }
 
 FileModel::FileModel(QObject *parent) :
     QAbstractListModel(parent),
-    m_selectedCount(0),
+    m_sortBy(SortByName),
+    m_directorySort(SortDirectoriesWithFiles),
+    m_sortOrder(Qt::AscendingOrder),
+    m_caseSensitivity(Qt::CaseSensitive),
+    m_includeDirectories(true),
     m_active(false),
-    m_dirty(false)
+    m_dirty(false),
+    m_selectedCount(0)
 {
     m_watcher = new QFileSystemWatcher(this);
     connect(m_watcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(refresh()));
@@ -160,9 +187,64 @@ void FileModel::setPath(QString path)
     emit pathChanged();
 }
 
-QString FileModel::appendPath(QString pathName)
+void FileModel::setSortBy(Sort sortBy)
 {
-    return QDir::cleanPath(QDir(m_path).absoluteFilePath(pathName));
+    if (m_sortBy == sortBy)
+        return;
+
+    m_sortBy = sortBy;
+    emit sortByChanged();
+
+    refreshEntries();
+    m_dirty = false;
+}
+
+void FileModel::setSortOrder(Qt::SortOrder order)
+{
+    if (m_sortOrder == order)
+        return;
+
+    m_sortOrder = order;
+    emit sortOrderChanged();
+
+    refreshEntries();
+    m_dirty = false;
+}
+
+void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
+{
+    if (m_caseSensitivity == sensitivity)
+        return;
+
+    m_caseSensitivity = sensitivity;
+    emit caseSensitivityChanged();
+
+    refreshEntries();
+    m_dirty = false;
+}
+
+void FileModel::setIncludeDirectories(bool include)
+{
+    if (m_includeDirectories == include)
+        return;
+
+    m_includeDirectories = include;
+    emit includeFoldersChanged();
+
+    refreshEntries();
+    m_dirty = false;
+}
+
+void FileModel::setDirectorySort(DirectorySort sort)
+{
+    if (m_directorySort == sort)
+        return;
+
+    m_directorySort = sort;
+    emit directorySortChanged();
+
+    refreshEntries();
+    m_dirty = false;
 }
 
 void FileModel::setActive(bool active)
@@ -177,6 +259,11 @@ void FileModel::setActive(bool active)
         readDirectory();
 
     m_dirty = false;
+}
+
+QString FileModel::appendPath(QString pathName)
+{
+    return QDir::cleanPath(QDir(m_path).absoluteFilePath(pathName));
 }
 
 QString FileModel::parentPath()
@@ -312,30 +399,19 @@ void FileModel::recountSelectedFiles()
 
 void FileModel::readAllEntries()
 {
-    QDir dir(m_path);
+    QDir dir(directory());
     if (!dir.exists()) {
-        qmlInfo(this) << "Path " << m_path << " not found";
+        qmlInfo(this) << "Path " << dir.path() << " not found";
         return;
     }
 
-    if (access(m_path, R_OK) == -1) {
-        qmlInfo(this) << "No permissions to access " << m_path;
-        emit error(ErrorReadNoPermissions, m_path);
+    if (access(dir.path(), R_OK) == -1) {
+        qmlInfo(this) << "No permissions to access " << dir.path();
+        emit error(ErrorReadNoPermissions, dir.path());
         return;
     }
 
-    dir.setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot | QDir::System);
-
-    QStringList fileList = dir.entryList();
-    foreach (QString fileName, fileList) {
-        if (fileName.startsWith("qt_temp.")) {
-            // Workaround for QFile::copy() creating intermediate qt_temp.* file (see QTBUG-27601)
-            continue;
-        }
-        QString fullpath = dir.absoluteFilePath(fileName);
-        StatFileInfo info(fullpath);
-        m_files.append(info);
-    }
+    m_files = directoryEntries(dir);
 }
 
 void FileModel::refreshEntries()
@@ -346,36 +422,23 @@ void FileModel::refreshEntries()
         return;
     }
 
-    QDir dir(m_path);
+    QDir dir(directory());
     if (!dir.exists()) {
         clearModel();
 
-        qmlInfo(this) << "Path " << m_path << " not found";
+        qmlInfo(this) << "Path " << dir.path() << " not found";
         return;
     }
 
-    if (access(m_path, R_OK) == -1) {
+    if (access(dir.path(), R_OK) == -1) {
         clearModel();
-        qmlInfo(this) << "No permissions to access " << m_path;
-        emit error(ErrorReadNoPermissions, m_path);
+        qmlInfo(this) << "No permissions to access " << dir.path();
+        emit error(ErrorReadNoPermissions, dir.path());
         return;
     }
-
-    dir.setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot | QDir::System);
 
     // read all files
-    QList<StatFileInfo> newFiles;
-
-    QStringList fileList = dir.entryList();
-    foreach (QString fileName, fileList) {
-        if (fileName.startsWith("qt_temp.")) {
-            // Workaround for QFile::copy() creating intermediate qt_temp.* file (see QTBUG-27601)
-            continue;
-        }
-        QString fullpath = dir.absoluteFilePath(fileName);
-        StatFileInfo info(fullpath);
-        newFiles.append(info);
-    }
+    QList<StatFileInfo> newFiles = directoryEntries(dir);
 
     int oldCount = m_files.count();
 
@@ -427,3 +490,46 @@ bool FileModel::filesContains(const QList<StatFileInfo> &files, const StatFileIn
     }
     return false;
 }
+
+QDir FileModel::directory() const
+{
+    QDir dir(m_path);
+    if (dir.exists()) {
+        QDir::Filters filters(QDir::Files | QDir::NoDotAndDotDot | QDir::System);
+
+        if (m_includeDirectories) {
+            filters |= QDir::AllDirs;
+        }
+
+        QDir::SortFlags sortFlags(QDir::LocaleAware);
+
+        if (m_sortBy == SortByName) {
+            sortFlags |= QDir::Name;
+        } else if (m_sortBy == SortByModified) {
+            sortFlags |= QDir::Time;
+        } else if (m_sortBy == SortBySize) {
+            sortFlags |= QDir::Size;
+        } else if (m_sortBy == SortByExtension) {
+            sortFlags |= QDir::Type;
+        }
+
+        if (m_sortOrder == Qt::DescendingOrder) {
+            sortFlags |= QDir::Reversed;
+        }
+        if (m_caseSensitivity == Qt::CaseInsensitive) {
+            sortFlags |= QDir::IgnoreCase;
+        }
+
+        if (m_directorySort == SortDirectoriesBeforeFiles) {
+            sortFlags |= QDir::DirsFirst;
+        } else if (m_directorySort == SortDirectoriesAfterFiles) {
+            sortFlags |= QDir::DirsLast;
+        }
+
+        dir.setFilter(filters);
+        dir.setSorting(sortFlags);
+    }
+
+    return dir;
+}
+
