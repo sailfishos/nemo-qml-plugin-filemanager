@@ -81,9 +81,6 @@ public:
     bool busy() const;
     Mode mode() const;
 
-    // For C++
-    static FileEngine *instance();
-
     // methods accessible from QML
 
     // asynch methods send signals when done or error occurs
