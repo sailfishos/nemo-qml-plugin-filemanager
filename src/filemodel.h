@@ -57,6 +57,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeFoldersChanged)
     Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
     Q_PROPERTY(QStringList nameFilters READ nameFilters WRITE setNameFilters NOTIFY nameFiltersChanged)
+    Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
@@ -114,6 +115,7 @@ public:
     QStringList nameFilters() const { return m_nameFilters; }
     void setNameFilters(const QStringList &filters);
 
+    bool populated() const { return m_populated; }
     int count() const;
 
     bool active() const { return m_active; }
@@ -146,6 +148,7 @@ signals:
     void includeFoldersChanged();
     void directorySortChanged();
     void nameFiltersChanged();
+    void populatedChanged();
     void countChanged();
     void error(Error error, QString fileName);
     void activeChanged();
@@ -171,6 +174,7 @@ private:
     bool m_includeDirectories;
     bool m_active;
     bool m_dirty;
+    bool m_populated;
     int m_selectedCount;
     QStringList m_nameFilters;
     QList<StatFileInfo> m_files;

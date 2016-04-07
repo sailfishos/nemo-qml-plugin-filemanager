@@ -49,7 +49,9 @@ enum {
     IsDirRole = Qt::UserRole + 6,
     IsLinkRole = Qt::UserRole + 7,
     SymLinkTargetRole = Qt::UserRole + 8,
-    IsSelectedRole = Qt::UserRole + 9
+    IsSelectedRole = Qt::UserRole + 9,
+    ExtensionRole = Qt::UserRole + 10,
+    AbsolutePathRole = Qt::UserRole + 11
 };
 
 int access(QString fileName, int how)
@@ -88,6 +90,7 @@ FileModel::FileModel(QObject *parent) :
     m_includeDirectories(true),
     m_active(false),
     m_dirty(false),
+    m_populated(false),
     m_selectedCount(0)
 {
     m_watcher = new QFileSystemWatcher(this);
@@ -110,7 +113,7 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     if (!index.isValid() || index.row() > m_files.size()-1)
         return QVariant();
 
-    StatFileInfo info = m_files.at(index.row());
+    const StatFileInfo &info = m_files.at(index.row());
     switch (role) {
 
     case Qt::DisplayRole:
@@ -141,6 +144,12 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     case IsSelectedRole:
         return info.isSelected();
 
+    case ExtensionRole:
+        return info.extension();
+
+    case AbsolutePathRole:
+        return info.absoluteFilePath();
+
     default:
         return QVariant();
     }
@@ -158,6 +167,8 @@ QHash<int, QByteArray> FileModel::roleNames() const
     roles.insert(IsLinkRole, QByteArray("isLink"));
     roles.insert(SymLinkTargetRole, QByteArray("symLinkTarget"));
     roles.insert(IsSelectedRole, QByteArray("isSelected"));
+    roles.insert(ExtensionRole, QByteArray("extension"));
+    roles.insert(AbsolutePathRole, QByteArray("absolutePath"));
     return roles;
 }
 
@@ -170,6 +181,11 @@ void FileModel::setPath(QString path)
 {
     if (m_path == path)
         return;
+
+    if (m_populated) {
+        m_populated = false;
+        emit populatedChanged();
+    }
 
     // update watcher to watch the new directory
     if (!m_path.isEmpty())
@@ -185,6 +201,11 @@ void FileModel::setPath(QString path)
     m_dirty = false;
 
     emit pathChanged();
+
+    if (!m_populated) {
+        m_populated = true;
+        emit populatedChanged();
+    }
 }
 
 void FileModel::setSortBy(Sort sortBy)

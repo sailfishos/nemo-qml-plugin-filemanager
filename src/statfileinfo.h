@@ -98,6 +98,7 @@ public:
     qint64 size() const { return m_fileInfo.size(); }
     QDateTime lastModified() const { return m_fileInfo.lastModified(); }
     QDateTime created() const { return m_fileInfo.created(); }
+    QString extension() const { return m_fileInfo.suffix(); }
     bool exists() const;
     bool isSafeToRead() const;
 
