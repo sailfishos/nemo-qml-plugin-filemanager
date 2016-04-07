@@ -162,7 +162,6 @@ private:
     void readAllEntries();
     void refreshEntries();
     void clearModel();
-    bool filesContains(const QList<StatFileInfo> &files, const StatFileInfo &fileData) const;
 
     QDir directory() const;
 

@@ -125,4 +125,7 @@ private:
     bool m_selected;
 };
 
+bool operator==(const StatFileInfo &lhs, const StatFileInfo &rhs);
+bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs);
+
 #endif // STATFILEINFO_H

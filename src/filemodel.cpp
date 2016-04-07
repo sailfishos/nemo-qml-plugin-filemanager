@@ -477,8 +477,8 @@ void FileModel::refreshEntries()
 
     // compare old and new files and do removes if needed
     for (int i = m_files.count()-1; i >= 0; --i) {
-        StatFileInfo data = m_files.at(i);
-        if (!filesContains(newFiles, data)) {
+        const StatFileInfo &data = m_files.at(i);
+        if (!newFiles.contains(data)) {
             beginRemoveRows(QModelIndex(), i, i);
             m_files.removeAt(i);
             endRemoveRows();
@@ -487,8 +487,8 @@ void FileModel::refreshEntries()
 
     // compare old and new files and do inserts if needed
     for (int i = 0; i < newFiles.count(); ++i) {
-        StatFileInfo data = newFiles.at(i);
-        if (!filesContains(m_files, data)) {
+        const StatFileInfo &data = newFiles.at(i);
+        if (!m_files.contains(data)) {
             beginInsertRows(QModelIndex(), i, i);
             m_files.insert(i, data);
             endInsertRows();
@@ -506,22 +506,6 @@ void FileModel::clearModel()
     m_files.clear();
     endResetModel();
     emit countChanged();
-}
-
-bool FileModel::filesContains(const QList<StatFileInfo> &files, const StatFileInfo &fileData) const
-{
-    // check if list contains fileData with relevant info
-    foreach (const StatFileInfo &f, files) {
-        if (f.fileName() == fileData.fileName() &&
-                f.size() == fileData.size() &&
-                f.permissions() == fileData.permissions() &&
-                f.lastModified() == fileData.lastModified() &&
-                f.isSymLink() == fileData.isSymLink() &&
-                f.isDirAtEnd() == fileData.isDirAtEnd()) {
-            return true;
-        }
-    }
-    return false;
 }
 
 QDir FileModel::directory() const
