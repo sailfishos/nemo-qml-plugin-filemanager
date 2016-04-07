@@ -247,6 +247,18 @@ void FileModel::setDirectorySort(DirectorySort sort)
     m_dirty = false;
 }
 
+void FileModel::setNameFilters(const QStringList &filters)
+{
+    if (m_nameFilters == filters)
+        return;
+
+    m_nameFilters = filters;
+    emit nameFiltersChanged();
+
+    refreshEntries();
+    m_dirty = false;
+}
+
 void FileModel::setActive(bool active)
 {
     if (m_active == active)
@@ -528,6 +540,10 @@ QDir FileModel::directory() const
 
         dir.setFilter(filters);
         dir.setSorting(sortFlags);
+
+        if (!m_nameFilters.isEmpty()) {
+            dir.setNameFilters(m_nameFilters);
+        }
     }
 
     return dir;

@@ -56,6 +56,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
     Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeFoldersChanged)
     Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
+    Q_PROPERTY(QStringList nameFilters READ nameFilters WRITE setNameFilters NOTIFY nameFiltersChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
@@ -110,6 +111,9 @@ public:
     DirectorySort directorySort() const { return m_directorySort; }
     void setDirectorySort(DirectorySort sort);
 
+    QStringList nameFilters() const { return m_nameFilters; }
+    void setNameFilters(const QStringList &filters);
+
     int count() const;
 
     bool active() const { return m_active; }
@@ -141,6 +145,7 @@ signals:
     void caseSensitivityChanged();
     void includeFoldersChanged();
     void directorySortChanged();
+    void nameFiltersChanged();
     void countChanged();
     void error(Error error, QString fileName);
     void activeChanged();
@@ -167,6 +172,7 @@ private:
     bool m_active;
     bool m_dirty;
     int m_selectedCount;
+    QStringList m_nameFilters;
     QList<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QMimeDatabase m_mimeDatabase;
