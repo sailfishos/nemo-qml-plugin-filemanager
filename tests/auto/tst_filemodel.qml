@@ -72,19 +72,57 @@ Item {
         ]
 
         function test_listing() {
-            compare(fileModel.count, 4)
+            var check = function(indices, name) {
+                compare(fileModel.count, indices.length, name)
 
-            for (var i = 0; i < fileModel.count; i++) {
-                var actual = repeater.itemAt(i)
-                var expected = results[i]
-                compare(actual.fileName, expected.fileName)
-                compare(actual.mimeType, expected.mimeType)
-                compare(actual.size, expected.size)
-                compare(actual.isDir, expected.isDir)
+                for (var i = 0; i < indices.length; i++) {
+                    var message = name + ': failed at index:' + i + '(result[' + indices[i] + '])'
+                    var actual = repeater.itemAt(i)
+                    var expected = results[indices[i]]
+                    compare(actual.fileName, expected.fileName, message)
+                    compare(actual.mimeType, expected.mimeType, message)
+                    compare(actual.size, expected.size, message)
+                    compare(actual.isDir, expected.isDir, message)
+                }
             }
+
+            fileModel.sortBy = FileModel.SortBySize
+            fileModel.includeDirectories = false
+            check([2, 1, 0], 'Sort by size')
+
+            fileModel.sortOrder = Qt.DescendingOrder
+            check([0, 1, 2], 'Reverse by size')
+
+            fileModel.directorySort = FileModel.SortDirectoriesBeforeFiles
+            fileModel.includeDirectories = true
+            check([3, 0, 1, 2], 'Reverse by size after directories')
+
+            fileModel.directorySort = FileModel.SortDirectoriesAfterFiles
+            check([0, 1, 2, 3], 'Reverse by size before directories')
+
+            fileModel.sortOrder = Qt.AscendingOrder
+            check([2, 1, 0, 3], 'By size before directories')
+
+            fileModel.sortBy = FileModel.SortByName
+            check([0, 1, 2, 3], 'By name before directories')
+
+            fileModel.nameFilters = [ 'b' ]
+            check([1, 3], 'Filtered by name')
+
+            fileModel.nameFilters = [ 'a', 'b' ]
+            check([0, 1, 3], 'Filtered by names')
+
+            fileModel.nameFilters = [ '[bc]*' ]
+            check([1, 2, 3], 'Filtered by glob')
         }
 
         function test_navigation() {
+            fileModel.sortBy = FileModel.SortByName
+            fileModel.sortOrder = Qt.AscendingOrder
+            fileModel.includeDirectories = true
+            fileModel.directorySort = FileModel.SortDirectoriesWithFiles
+            fileModel.nameFilters = []
+
             // go to sub-folder
             fileModel.path = fileModel.appendPath("subfolder")
             compare(fileModel.parentPath()  + "/" + "subfolder", fileModel.path)
