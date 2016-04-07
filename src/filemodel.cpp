@@ -63,11 +63,13 @@ int access(QString fileName, int how)
     return ::access(fn, how);
 }
 
-QList<StatFileInfo> directoryEntries(const QDir &dir)
+QVector<StatFileInfo> directoryEntries(const QDir &dir)
 {
-    QList<StatFileInfo> rv;
+    QVector<StatFileInfo> rv;
 
     QStringList fileList = dir.entryList();
+    rv.reserve(fileList.count());
+
     foreach (const QString &fileName, fileList) {
         if (fileName.startsWith("qt_temp.")) {
             // Workaround for QFile::copy() creating intermediate qt_temp.* file (see QTBUG-27601)
@@ -334,7 +336,7 @@ void FileModel::toggleSelectedFile(int fileIndex)
 
 void FileModel::clearSelectedFiles()
 {
-    QMutableListIterator<StatFileInfo> iter(m_files);
+    QMutableVectorIterator<StatFileInfo> iter(m_files);
     int row = 0;
     while (iter.hasNext()) {
         StatFileInfo &info = iter.next();
@@ -351,7 +353,7 @@ void FileModel::clearSelectedFiles()
 
 void FileModel::selectAllFiles()
 {
-    QMutableListIterator<StatFileInfo> iter(m_files);
+    QMutableVectorIterator<StatFileInfo> iter(m_files);
     int row = 0;
     while (iter.hasNext()) {
         StatFileInfo &info = iter.next();
@@ -474,7 +476,7 @@ void FileModel::refreshEntries()
     int oldCount = m_files.count();
 
     // read all files
-    QList<StatFileInfo> newFiles = directoryEntries(dir);
+    QVector<StatFileInfo> newFiles = directoryEntries(dir);
 
     ::synchronizeList(this, m_files, newFiles);
 
@@ -484,8 +486,10 @@ void FileModel::refreshEntries()
         emit countChanged();
 }
 
-int FileModel::insertRange(int index, int count, const QList<StatFileInfo> &source, int sourceIndex)
+int FileModel::insertRange(int index, int count, const QVector<StatFileInfo> &source, int sourceIndex)
 {
+    m_files.reserve(m_files.count() + count);
+
     beginInsertRows(QModelIndex(), index, index + count - 1);
 
     for (int i = 0; i < count; ++i)
@@ -499,7 +503,7 @@ int FileModel::removeRange(int index, int count)
 {
     beginRemoveRows(QModelIndex(), index, index + count - 1);
 
-    QList<StatFileInfo>::iterator it = m_files.begin() + index;
+    QVector<StatFileInfo>::iterator it = m_files.begin() + index;
     m_files.erase(it, it + count);
 
     endRemoveRows();

@@ -41,6 +41,7 @@
 #include <QDir>
 #include <QFileSystemWatcher>
 #include <QMimeDatabase>
+#include <QVector>
 
 /**
  * @brief The FileModel class can be used as a model in a ListView to display a list of files
@@ -138,7 +139,7 @@ public:
     Q_INVOKABLE QStringList selectedFiles() const;
 
     // For synchronizeList
-    int insertRange(int index, int count, const QList<StatFileInfo> &source, int sourceIndex);
+    int insertRange(int index, int count, const QVector<StatFileInfo> &source, int sourceIndex);
     int removeRange(int index, int count);
 
 public slots:
@@ -183,7 +184,7 @@ private:
     bool m_populated;
     int m_selectedCount;
     QStringList m_nameFilters;
-    QList<StatFileInfo> m_files;
+    QVector<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QMimeDatabase m_mimeDatabase;
 };
