@@ -201,13 +201,10 @@ void FileModel::setPath(QString path)
     readDirectory();
 
     m_dirty = false;
+    m_populated = true;
 
     emit pathChanged();
-
-    if (!m_populated) {
-        m_populated = true;
-        emit populatedChanged();
-    }
+    emit populatedChanged();
 }
 
 void FileModel::setSortBy(Sort sortBy)
@@ -216,10 +213,10 @@ void FileModel::setSortBy(Sort sortBy)
         return;
 
     m_sortBy = sortBy;
-    emit sortByChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit sortByChanged();
 }
 
 void FileModel::setSortOrder(Qt::SortOrder order)
@@ -228,10 +225,10 @@ void FileModel::setSortOrder(Qt::SortOrder order)
         return;
 
     m_sortOrder = order;
-    emit sortOrderChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit sortOrderChanged();
 }
 
 void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
@@ -240,10 +237,10 @@ void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
         return;
 
     m_caseSensitivity = sensitivity;
-    emit caseSensitivityChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit caseSensitivityChanged();
 }
 
 void FileModel::setIncludeDirectories(bool include)
@@ -252,10 +249,10 @@ void FileModel::setIncludeDirectories(bool include)
         return;
 
     m_includeDirectories = include;
-    emit includeFoldersChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit includeFoldersChanged();
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -264,10 +261,10 @@ void FileModel::setDirectorySort(DirectorySort sort)
         return;
 
     m_directorySort = sort;
-    emit directorySortChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit directorySortChanged();
 }
 
 void FileModel::setNameFilters(const QStringList &filters)
@@ -276,10 +273,10 @@ void FileModel::setNameFilters(const QStringList &filters)
         return;
 
     m_nameFilters = filters;
-    emit nameFiltersChanged();
-
     refreshEntries();
     m_dirty = false;
+
+    emit nameFiltersChanged();
 }
 
 void FileModel::setActive(bool active)
@@ -288,12 +285,12 @@ void FileModel::setActive(bool active)
         return;
 
     m_active = active;
-    emit activeChanged();
-
-    if (m_dirty)
+    if (m_dirty) {
         readDirectory();
+        m_dirty = false;
+    }
 
-    m_dirty = false;
+    emit activeChanged();
 }
 
 QString FileModel::appendPath(QString pathName)
@@ -415,8 +412,10 @@ void FileModel::readDirectory()
         readAllEntries();
 
     endResetModel();
-    emit countChanged();
+
     recountSelectedFiles();
+
+    emit countChanged();
 }
 
 void FileModel::recountSelectedFiles()
@@ -479,9 +478,10 @@ void FileModel::refreshEntries()
 
     ::synchronizeList(this, m_files, newFiles);
 
+    recountSelectedFiles();
+
     if (m_files.count() != oldCount)
         emit countChanged();
-    recountSelectedFiles();
 }
 
 int FileModel::insertRange(int index, int count, const QList<StatFileInfo> &source, int sourceIndex)
@@ -508,10 +508,13 @@ int FileModel::removeRange(int index, int count)
 
 void FileModel::clearModel()
 {
-    beginResetModel();
-    m_files.clear();
-    endResetModel();
-    emit countChanged();
+    if (!m_files.isEmpty()) {
+        beginResetModel();
+        m_files.clear();
+        endResetModel();
+
+        emit countChanged();
+    }
 }
 
 QDir FileModel::directory() const
