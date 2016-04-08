@@ -73,6 +73,7 @@ Item {
 
         function test_listing() {
             var check = function(indices, name) {
+                wait(0)
                 compare(fileModel.count, indices.length, name)
 
                 for (var i = 0; i < indices.length; i++) {
@@ -114,6 +115,16 @@ Item {
 
             fileModel.nameFilters = [ '[bc]*' ]
             check([1, 2, 3], 'Filtered by glob')
+
+            // An inactive model should still update on configuration change
+            fileModel.active = false
+            check([1, 2, 3], 'Deactivated')
+
+            fileModel.nameFilters = [ 'c' ]
+            check([2, 3], 'Filtered by name while inactive')
+
+            fileModel.active = true
+            check([2, 3], 'Filtered by name after reactivation')
         }
 
         function test_navigation() {
@@ -122,15 +133,18 @@ Item {
             fileModel.includeDirectories = true
             fileModel.directorySort = FileModel.SortDirectoriesWithFiles
             fileModel.nameFilters = []
+            fileModel.active = true
 
             // go to sub-folder
             fileModel.path = fileModel.appendPath("subfolder")
+            wait(0)
             compare(fileModel.parentPath()  + "/" + "subfolder", fileModel.path)
             compare(fileModel.count, 1)
             compare(repeater.itemAt(0).fileName, "d")
 
             // return
             fileModel.path = fileModel.parentPath()
+            wait(0)
             compare(fileModel.count, 4)
             compare(repeater.itemAt(0).fileName, "a")
         }
@@ -139,6 +153,7 @@ Item {
             compare(lastError, FileModel.NoError)
 
             fileModel.path = "hiddenfolder"
+            wait(0)
             compare(lastError, FileModel.ErrorReadNoPermissions)
         }
     }

@@ -93,6 +93,7 @@ Item {
             compare(FileEngine.clipboardCount, 0)
 
             // copy second file
+            tryCompare(fileModel, "populated", true)
             var fileName = repeater.itemAt(1).fileName
             FileEngine.copyFiles([ fileModel.fileNameAt(1) ])
 
@@ -101,6 +102,7 @@ Item {
 
             // go to sub-folder, paste the file
             fileModel.path = fileModel.appendPath("subfolder")
+            wait(0)
             compare(fileModel.count, 1)
             FileEngine.pasteFiles(fileModel.path)
 
@@ -109,6 +111,7 @@ Item {
 
             // check that new file has appeared
             var newFileName = fileModel.path + "/" + fileName
+            wait(0)
             compare(fileModel.count, 2)
             compare(fileModel.fileNameAt(0), newFileName)
 
@@ -117,12 +120,14 @@ Item {
 
             // wait for the deletion to finish
             workerDoneSpy.wait()
+            wait(0)
             compare(fileModel.count, 1)
         }
 
         function test_mkdir() {
 
             fileModel.path = fileModel.appendPath("subfolder")
+            wait(0)
             compare(fileModel.count, 1)
 
             // create folder
@@ -133,6 +138,7 @@ Item {
             // check that folder got created
             fileCountSpy.clear()
             fileCountSpy.wait()
+            wait(0)
             compare(fileModel.count, 2)
             compare(repeater.itemAt(1).fileName, name)
 
@@ -141,6 +147,7 @@ Item {
 
             // wait for the deletion to finish
             workerDoneSpy.wait()
+            wait(0)
             compare(fileModel.count, 1)
         }
 

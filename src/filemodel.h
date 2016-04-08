@@ -38,6 +38,7 @@
 #include <synchronizelists.h>
 
 #include <QAbstractListModel>
+#include <QBasicTimer>
 #include <QDir>
 #include <QFileSystemWatcher>
 #include <QMimeDatabase>
@@ -58,7 +59,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
-    Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeFoldersChanged)
+    Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeDirectoriesChanged)
     Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
     Q_PROPERTY(QStringList nameFilters READ nameFilters WRITE setNameFilters NOTIFY nameFiltersChanged)
     Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
@@ -153,17 +154,34 @@ signals:
     void sortByChanged();
     void sortOrderChanged();
     void caseSensitivityChanged();
-    void includeFoldersChanged();
+    void includeDirectoriesChanged();
     void directorySortChanged();
     void nameFiltersChanged();
     void populatedChanged();
     void countChanged();
-    void error(Error error, QString fileName);
     void activeChanged();
     void selectedCountChanged();
+    void error(Error error, QString fileName);
 
 private slots:
     void readDirectory();
+
+public:
+    enum Changed {
+        PathChanged               = (1 << 0),
+        SortByChanged             = (1 << 1),
+        SortOrderChanged          = (1 << 2),
+        CaseSensitivityChanged    = (1 << 3),
+        IncludeDirectoriesChanged = (1 << 4),
+        DirectorySortChanged      = (1 << 5),
+        NameFiltersChanged        = (1 << 6),
+        PopulatedChanged          = (1 << 7),
+        CountChanged              = (1 << 8),
+        ActiveChanged             = (1 << 9),
+        SelectedCountChanged      = (1 << 10),
+        ContentChanged            = (1 << 11),
+    };
+    Q_DECLARE_FLAGS(ChangedFlags, Changed);
 
 private:
     void recountSelectedFiles();
@@ -172,6 +190,11 @@ private:
     void clearModel();
 
     QDir directory() const;
+
+    void scheduleUpdate(ChangedFlags flags = ChangedFlags());
+    void update();
+
+    void timerEvent(QTimerEvent *event) override;
 
     QString m_path;
     Sort m_sortBy;
@@ -187,8 +210,10 @@ private:
     QVector<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QMimeDatabase m_mimeDatabase;
+    QBasicTimer m_timer;
+    ChangedFlags m_changedFlags;
 };
 
-
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileModel::ChangedFlags)
 
 #endif // FILEMODEL_H

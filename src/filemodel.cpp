@@ -199,14 +199,7 @@ void FileModel::setPath(QString path)
         m_watcher->addPath(path);
 
     m_path = path;
-
-    readDirectory();
-
-    m_dirty = false;
-    m_populated = true;
-
-    emit pathChanged();
-    emit populatedChanged();
+    scheduleUpdate(PathChanged);
 }
 
 void FileModel::setSortBy(Sort sortBy)
@@ -215,10 +208,7 @@ void FileModel::setSortBy(Sort sortBy)
         return;
 
     m_sortBy = sortBy;
-    refreshEntries();
-    m_dirty = false;
-
-    emit sortByChanged();
+    scheduleUpdate(SortByChanged | ContentChanged);
 }
 
 void FileModel::setSortOrder(Qt::SortOrder order)
@@ -227,10 +217,7 @@ void FileModel::setSortOrder(Qt::SortOrder order)
         return;
 
     m_sortOrder = order;
-    refreshEntries();
-    m_dirty = false;
-
-    emit sortOrderChanged();
+    scheduleUpdate(SortOrderChanged | ContentChanged);
 }
 
 void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
@@ -239,10 +226,7 @@ void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
         return;
 
     m_caseSensitivity = sensitivity;
-    refreshEntries();
-    m_dirty = false;
-
-    emit caseSensitivityChanged();
+    scheduleUpdate(CaseSensitivityChanged | ContentChanged);
 }
 
 void FileModel::setIncludeDirectories(bool include)
@@ -251,10 +235,7 @@ void FileModel::setIncludeDirectories(bool include)
         return;
 
     m_includeDirectories = include;
-    refreshEntries();
-    m_dirty = false;
-
-    emit includeFoldersChanged();
+    scheduleUpdate(IncludeDirectoriesChanged | ContentChanged);
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -263,10 +244,7 @@ void FileModel::setDirectorySort(DirectorySort sort)
         return;
 
     m_directorySort = sort;
-    refreshEntries();
-    m_dirty = false;
-
-    emit directorySortChanged();
+    scheduleUpdate(DirectorySortChanged | ContentChanged);
 }
 
 void FileModel::setNameFilters(const QStringList &filters)
@@ -275,10 +253,7 @@ void FileModel::setNameFilters(const QStringList &filters)
         return;
 
     m_nameFilters = filters;
-    refreshEntries();
-    m_dirty = false;
-
-    emit nameFiltersChanged();
+    scheduleUpdate(NameFiltersChanged | ContentChanged);
 }
 
 void FileModel::setActive(bool active)
@@ -287,12 +262,7 @@ void FileModel::setActive(bool active)
         return;
 
     m_active = active;
-    if (m_dirty) {
-        readDirectory();
-        m_dirty = false;
-    }
-
-    emit activeChanged();
+    scheduleUpdate(ActiveChanged | ContentChanged);
 }
 
 QString FileModel::appendPath(QString pathName)
@@ -388,8 +358,7 @@ void FileModel::refresh()
         return;
     }
 
-    refreshEntries();
-    m_dirty = false;
+    scheduleUpdate(ContentChanged);
 }
 
 void FileModel::refreshFull()
@@ -399,8 +368,11 @@ void FileModel::refreshFull()
         return;
     }
 
-    readDirectory();
-    m_dirty = false;
+    if (m_populated) {
+        m_populated = false;
+        emit populatedChanged();
+    }
+    scheduleUpdate();
 }
 
 void FileModel::readDirectory()
@@ -409,7 +381,6 @@ void FileModel::readDirectory()
     beginResetModel();
 
     m_files.clear();
-
     if (!m_path.isEmpty())
         readAllEntries();
 
@@ -417,7 +388,8 @@ void FileModel::readDirectory()
 
     recountSelectedFiles();
 
-    emit countChanged();
+    m_populated = true;
+    m_changedFlags |= (PopulatedChanged | CountChanged);
 }
 
 void FileModel::recountSelectedFiles()
@@ -429,7 +401,7 @@ void FileModel::recountSelectedFiles()
     }
     if (m_selectedCount != count) {
         m_selectedCount = count;
-        emit selectedCountChanged();
+        m_changedFlags |= SelectedCountChanged;
     }
 }
 
@@ -452,38 +424,36 @@ void FileModel::readAllEntries()
 
 void FileModel::refreshEntries()
 {
-    // empty path
-    if (m_path.isEmpty()) {
-        clearModel();
-        return;
-    }
-
-    QDir dir(directory());
-    if (!dir.exists()) {
-        clearModel();
-
-        qmlInfo(this) << "Path " << dir.path() << " not found";
-        return;
-    }
-
-    if (access(dir.path(), R_OK) == -1) {
-        clearModel();
-        qmlInfo(this) << "No permissions to access " << dir.path();
-        emit error(ErrorReadNoPermissions, dir.path());
-        return;
-    }
-
     int oldCount = m_files.count();
 
-    // read all files
-    QVector<StatFileInfo> newFiles = directoryEntries(dir);
+    if (m_path.isEmpty()) {
+        clearModel();
+    } else {
+        QDir dir(directory());
+        if (!dir.exists()) {
+            clearModel();
 
-    ::synchronizeList(this, m_files, newFiles);
+            qmlInfo(this) << "Path " << dir.path() << " not found";
+            return;
+        }
+
+        if (access(dir.path(), R_OK) == -1) {
+            clearModel();
+            qmlInfo(this) << "No permissions to access " << dir.path();
+            emit error(ErrorReadNoPermissions, dir.path());
+            return;
+        }
+
+        // read all files
+        QVector<StatFileInfo> newFiles = directoryEntries(dir);
+        ::synchronizeList(this, m_files, newFiles);
+    }
 
     recountSelectedFiles();
 
-    if (m_files.count() != oldCount)
-        emit countChanged();
+    if (m_files.count() != oldCount) {
+        m_changedFlags |= CountChanged;
+    }
 }
 
 int FileModel::insertRange(int index, int count, const QVector<StatFileInfo> &source, int sourceIndex)
@@ -516,8 +486,6 @@ void FileModel::clearModel()
         beginResetModel();
         m_files.clear();
         endResetModel();
-
-        emit countChanged();
     }
 }
 
@@ -565,5 +533,70 @@ QDir FileModel::directory() const
     }
 
     return dir;
+}
+
+void FileModel::scheduleUpdate(ChangedFlags flags)
+{
+    m_changedFlags |= flags;
+    if (!m_timer.isActive()) {
+        m_timer.start(0, this);
+    }
+}
+
+void FileModel::update()
+{
+    if (!m_populated) {
+        // Do a complete refresh
+        readDirectory();
+    } else if (m_changedFlags & ContentChanged) {
+        // Do an incremental update
+        refreshEntries();
+    }
+
+    // Report any changes that have occurred
+    if (m_changedFlags & PathChanged) {
+        emit pathChanged();
+    }
+    if (m_changedFlags & SortByChanged) {
+        emit sortByChanged();
+    }
+    if (m_changedFlags & SortOrderChanged) {
+        emit sortOrderChanged();
+    }
+    if (m_changedFlags & CaseSensitivityChanged) {
+        emit caseSensitivityChanged();
+    }
+    if (m_changedFlags & IncludeDirectoriesChanged) {
+        emit includeDirectoriesChanged();
+    }
+    if (m_changedFlags & DirectorySortChanged) {
+        emit directorySortChanged();
+    }
+    if (m_changedFlags & NameFiltersChanged) {
+        emit nameFiltersChanged();
+    }
+    if (m_changedFlags & PopulatedChanged) {
+        emit populatedChanged();
+    }
+    if (m_changedFlags & CountChanged) {
+        emit countChanged();
+    }
+    if (m_changedFlags & ActiveChanged) {
+        emit activeChanged();
+    }
+    if (m_changedFlags & SelectedCountChanged) {
+        emit selectedCountChanged();
+    }
+
+    m_changedFlags = 0;
+    m_dirty = false;
+}
+
+void FileModel::timerEvent(QTimerEvent *event)
+{
+    if (event->timerId() == m_timer.timerId()) {
+        m_timer.stop();
+        update();
+    }
 }
 
