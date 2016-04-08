@@ -113,3 +113,19 @@ void StatFileInfo::refresh()
 
 }
 
+bool operator==(const StatFileInfo &lhs, const StatFileInfo &rhs)
+{
+    // We could just do an inode comparison here?
+    return (lhs.fileName() == rhs.fileName() &&
+            lhs.size() == rhs.size() &&
+            lhs.permissions() == rhs.permissions() &&
+            lhs.lastModified() == rhs.lastModified() &&
+            lhs.isSymLink() == rhs.isSymLink() &&
+            lhs.isDirAtEnd() == rhs.isDirAtEnd());
+}
+
+bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs)
+{
+    return !operator==(lhs, rhs);
+}
+

@@ -5,6 +5,11 @@ TEMPLATE = lib
 CONFIG += qt plugin hide_symbols c++11
 QT += qml
 
+CONFIG += link_pkgconfig
+
+# We just need the include path from contactcache, not the library itself
+QMAKE_CXXFLAGS *= $$system(pkg-config --cflags contactcache-qt5)
+
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
 
@@ -19,3 +24,5 @@ HEADERS += filemodel.h fileengine.h fileworker.h \
            statfileinfo.h
 
 INCLUDEPATH += $$PWD
+
+OTHER_FILES += ../example/*/*.qml

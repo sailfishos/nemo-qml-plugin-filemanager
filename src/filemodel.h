@@ -33,11 +33,16 @@
 #ifndef FILEMODEL_H
 #define FILEMODEL_H
 
+#include "statfileinfo.h"
+
+#include <synchronizelists.h>
+
 #include <QAbstractListModel>
+#include <QBasicTimer>
 #include <QDir>
 #include <QFileSystemWatcher>
-#include "statfileinfo.h"
 #include <QMimeDatabase>
+#include <QVector>
 
 /**
  * @brief The FileModel class can be used as a model in a ListView to display a list of files
@@ -51,16 +56,41 @@ class FileModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
+    Q_PROPERTY(QString absolutePath READ absolutePath NOTIFY pathChanged)
+    Q_PROPERTY(QString directoryName READ directoryName NOTIFY pathChanged)
+    Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
+    Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
+    Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
+    Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeDirectoriesChanged)
+    Q_PROPERTY(bool includeParentDirectory READ includeParentDirectory WRITE setIncludeParentDirectory NOTIFY includeParentDirectoryChanged)
+    Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
+    Q_PROPERTY(QStringList nameFilters READ nameFilters WRITE setNameFilters NOTIFY nameFiltersChanged)
+    Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(int selectedCount READ selectedCount NOTIFY selectedCountChanged)
 
     Q_ENUMS(Error)
+    Q_ENUMS(Sort)
+    Q_ENUMS(DirectorySort)
 
 public:
     enum Error {
         NoError,
         ErrorReadNoPermissions
+    };
+
+    enum Sort {
+        SortByName,
+        SortByModified,
+        SortBySize,
+        SortByExtension
+    };
+
+    enum DirectorySort {
+        SortDirectoriesWithFiles,
+        SortDirectoriesBeforeFiles,
+        SortDirectoriesAfterFiles
     };
 
     explicit FileModel(QObject *parent = 0);
@@ -74,9 +104,37 @@ public:
     // property accessors
     QString path() const { return m_path; }
     void setPath(QString path);
+
+    QString absolutePath() const { return m_absolutePath; }
+    QString directoryName() const { return m_directory; }
+
+    Sort sortBy() const { return m_sortBy; }
+    void setSortBy(Sort sortBy);
+
+    Qt::SortOrder sortOrder() const { return m_sortOrder; }
+    void setSortOrder(Qt::SortOrder order);
+
+    Qt::CaseSensitivity caseSensitivity() const { return m_caseSensitivity; }
+    void setCaseSensitivity(Qt::CaseSensitivity sensitivity);
+
+    bool includeDirectories() const { return m_includeDirectories; }
+    void setIncludeDirectories(bool include);
+
+    bool includeParentDirectory() const { return m_includeParentDirectory; }
+    void setIncludeParentDirectory(bool include);
+
+    DirectorySort directorySort() const { return m_directorySort; }
+    void setDirectorySort(DirectorySort sort);
+
+    QStringList nameFilters() const { return m_nameFilters; }
+    void setNameFilters(const QStringList &filters);
+
+    bool populated() const { return m_populated; }
     int count() const;
+
     bool active() const { return m_active; }
     void setActive(bool active);
+
     int selectedCount() const { return m_selectedCount; }
 
     // methods accessible from QML
@@ -90,6 +148,10 @@ public:
     Q_INVOKABLE void selectAllFiles();
     Q_INVOKABLE QStringList selectedFiles() const;
 
+    // For synchronizeList
+    int insertRange(int index, int count, const QVector<StatFileInfo> &source, int sourceIndex);
+    int removeRange(int index, int count);
+
 public slots:
     // reads the directory and inserts/removes model items as needed
     Q_INVOKABLE void refresh();
@@ -98,30 +160,74 @@ public slots:
 
 signals:
     void pathChanged();
+    void sortByChanged();
+    void sortOrderChanged();
+    void caseSensitivityChanged();
+    void includeDirectoriesChanged();
+    void includeParentDirectoryChanged();
+    void directorySortChanged();
+    void nameFiltersChanged();
+    void populatedChanged();
     void countChanged();
-    void error(Error error, QString fileName);
     void activeChanged();
     void selectedCountChanged();
+    void error(Error error, QString fileName);
 
 private slots:
     void readDirectory();
+
+public:
+    enum Changed {
+        PathChanged                   = (1 << 0),
+        SortByChanged                 = (1 << 1),
+        SortOrderChanged              = (1 << 2),
+        CaseSensitivityChanged        = (1 << 3),
+        IncludeDirectoriesChanged     = (1 << 4),
+        IncludeParentDirectoryChanged = (1 << 5),
+        DirectorySortChanged          = (1 << 6),
+        NameFiltersChanged            = (1 << 7),
+        PopulatedChanged              = (1 << 8),
+        CountChanged                  = (1 << 9),
+        ActiveChanged                 = (1 << 10),
+        SelectedCountChanged          = (1 << 11),
+        ContentChanged                = (1 << 12),
+    };
+    Q_DECLARE_FLAGS(ChangedFlags, Changed);
 
 private:
     void recountSelectedFiles();
     void readAllEntries();
     void refreshEntries();
     void clearModel();
-    bool filesContains(const QList<StatFileInfo> &files, const StatFileInfo &fileData) const;
+
+    QDir directory() const;
+
+    void scheduleUpdate(ChangedFlags flags = ChangedFlags());
+    void update();
+
+    void timerEvent(QTimerEvent *event) override;
 
     QString m_path;
-    QList<StatFileInfo> m_files;
-    int m_selectedCount;
+    QString m_absolutePath;
+    QString m_directory;
+    Sort m_sortBy;
+    DirectorySort m_directorySort;
+    Qt::SortOrder m_sortOrder;
+    Qt::CaseSensitivity m_caseSensitivity;
+    bool m_includeDirectories;
+    bool m_includeParentDirectory;
     bool m_active;
     bool m_dirty;
+    bool m_populated;
+    int m_selectedCount;
+    QStringList m_nameFilters;
+    QVector<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QMimeDatabase m_mimeDatabase;
+    QBasicTimer m_timer;
+    ChangedFlags m_changedFlags;
 };
 
-
+Q_DECLARE_OPERATORS_FOR_FLAGS(FileModel::ChangedFlags)
 
 #endif // FILEMODEL_H
