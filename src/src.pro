@@ -6,9 +6,10 @@ CONFIG += qt plugin hide_symbols c++11
 QT += qml
 
 CONFIG += link_pkgconfig
+PKGCONFIG += contactcache-qt5
 
-# We just need the include path from contactcache, not the library itself
-QMAKE_CXXFLAGS *= $$system(pkg-config --cflags contactcache-qt5)
+# Drop any library linkage we don't actually need (such as contactcache-qt5)
+QMAKE_LFLAGS *= -Wl,--as-needed
 
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
