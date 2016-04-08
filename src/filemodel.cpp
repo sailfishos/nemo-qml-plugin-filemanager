@@ -92,6 +92,7 @@ FileModel::FileModel(QObject *parent) :
     m_sortOrder(Qt::AscendingOrder),
     m_caseSensitivity(Qt::CaseSensitive),
     m_includeDirectories(true),
+    m_includeParentDirectory(false),
     m_active(false),
     m_dirty(false),
     m_populated(false),
@@ -199,6 +200,8 @@ void FileModel::setPath(QString path)
         m_watcher->addPath(path);
 
     m_path = path;
+    m_absolutePath = QString();
+    m_directory = QString();
     scheduleUpdate(PathChanged);
 }
 
@@ -236,6 +239,15 @@ void FileModel::setIncludeDirectories(bool include)
 
     m_includeDirectories = include;
     scheduleUpdate(IncludeDirectoriesChanged | ContentChanged);
+}
+
+void FileModel::setIncludeParentDirectory(bool include)
+{
+    if (m_includeParentDirectory == include)
+        return;
+
+    m_includeParentDirectory = include;
+    scheduleUpdate(IncludeParentDirectoryChanged | ContentChanged);
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -419,6 +431,8 @@ void FileModel::readAllEntries()
         return;
     }
 
+    m_absolutePath = dir.absolutePath();
+    m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
     m_files = directoryEntries(dir);
 }
 
@@ -493,10 +507,13 @@ QDir FileModel::directory() const
 {
     QDir dir(m_path);
     if (dir.exists()) {
-        QDir::Filters filters(QDir::Files | QDir::NoDotAndDotDot | QDir::System);
+        QDir::Filters filters(QDir::Files | QDir::NoDot | QDir::System);
 
         if (m_includeDirectories) {
             filters |= QDir::AllDirs;
+            if (!m_includeParentDirectory) {
+                filters |= QDir::NoDotDot;
+            }
         }
 
         QDir::SortFlags sortFlags(QDir::LocaleAware);
@@ -568,6 +585,9 @@ void FileModel::update()
     }
     if (m_changedFlags & IncludeDirectoriesChanged) {
         emit includeDirectoriesChanged();
+    }
+    if (m_changedFlags & IncludeParentDirectoryChanged) {
+        emit includeParentDirectoryChanged();
     }
     if (m_changedFlags & DirectorySortChanged) {
         emit directorySortChanged();
