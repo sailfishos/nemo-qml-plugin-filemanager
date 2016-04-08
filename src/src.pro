@@ -24,3 +24,5 @@ HEADERS += filemodel.h fileengine.h fileworker.h \
            statfileinfo.h
 
 INCLUDEPATH += $$PWD
+
+OTHER_FILES += ../example/*/*.qml
