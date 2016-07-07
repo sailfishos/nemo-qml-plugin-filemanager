@@ -121,6 +121,24 @@ void FileWorker::cancel()
     m_cancelled.storeRelease(Cancelled);
 }
 
+bool FileWorker::mkdir(QString path, QString name)
+{
+    QDir dir(path);
+    return dir.mkdir(name);
+}
+
+bool FileWorker::rename(QString oldPath, QString newPath)
+{
+    QFile file(oldPath);
+    return file.rename(newPath);
+}
+
+bool FileWorker::setPermissions(QString path, QFileDevice::Permissions p)
+{
+    QFile file(path);
+    return file.setPermissions(p);
+}
+
 void FileWorker::run()
 {
     switch (m_mode) {
@@ -335,3 +353,4 @@ bool FileWorker::copyOverwrite(QString src, QString dest)
     QFile sfile(src);
     return sfile.copy(dest);
 }
+

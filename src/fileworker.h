@@ -55,6 +55,11 @@ public:
 
     void cancel();
 
+    // synchronous functions
+    bool mkdir(QString path, QString name);
+    bool rename(QString oldPath, QString newPath);
+    bool setPermissions(QString path, QFileDevice::Permissions p);
+
     FileEngine::Mode mode() const;
 
 signals:

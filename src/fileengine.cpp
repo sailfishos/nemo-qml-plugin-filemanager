@@ -172,24 +172,19 @@ bool FileEngine::exists(QString fileName)
 
 bool FileEngine::mkdir(QString path, QString name)
 {
-    QDir dir(path);
-
-    if (!dir.mkdir(name)) {
+    if (!m_fileWorker->mkdir(path, name)) {
         emit error(ErrorFolderCreationFailed, name);
         return false;
     }
-
     return true;
 }
 
 bool FileEngine::rename(QString fullOldFileName, QString newName)
 {
-    QFile file(fullOldFileName);
     QFileInfo fileInfo(fullOldFileName);
     QDir dir = fileInfo.absoluteDir();
     QString fullNewFileName = dir.absoluteFilePath(newName);
-
-    if (!file.rename(fullNewFileName)) {
+    if (!m_fileWorker->rename(fullOldFileName, fullNewFileName)) {
         emit error(ErrorRenameFailed, fileInfo.fileName());
         return false;
     }
@@ -201,7 +196,6 @@ bool FileEngine::chmod(QString path,
                       bool groupRead, bool groupWrite, bool groupExecute,
                       bool othersRead, bool othersWrite, bool othersExecute)
 {
-    QFile file(path);
     QFileDevice::Permissions p;
     if (ownerRead) p |= QFileDevice::ReadOwner;
     if (ownerWrite) p |= QFileDevice::WriteOwner;
@@ -212,7 +206,7 @@ bool FileEngine::chmod(QString path,
     if (othersRead) p |= QFileDevice::ReadOther;
     if (othersWrite) p |= QFileDevice::WriteOther;
     if (othersExecute) p |= QFileDevice::ExeOther;
-    if (!file.setPermissions(p)) {
+    if (!m_fileWorker->setPermissions(path, p)) {
         emit error(ErrorChmodFailed, path);
         return false;
     }
