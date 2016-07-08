@@ -49,16 +49,16 @@ public:
     ~FileWorker();
 
     // call these to start the thread, returns false if start failed
-    void startDeleteFiles(QStringList fileNames);
-    void startCopyFiles(QStringList fileNames, QString destDirectory);
-    void startMoveFiles(QStringList fileNames, QString destDirectory);
+    void startDeleteFiles(QStringList fileNames, QString asUser);
+    void startCopyFiles(QStringList fileNames, QString destDirectory, QString asUser);
+    void startMoveFiles(QStringList fileNames, QString destDirectory, QString asUser);
 
     void cancel();
 
     // synchronous functions
-    bool mkdir(QString path, QString name);
-    bool rename(QString oldPath, QString newPath);
-    bool setPermissions(QString path, QFileDevice::Permissions p);
+    bool mkdir(QString path, QString name, QString asUser);
+    bool rename(QString oldPath, QString newPath, QString asUser);
+    bool setPermissions(QString path, QFileDevice::Permissions p, QString asUser);
 
     FileEngine::Mode mode() const;
 
@@ -82,6 +82,10 @@ private:
         Cancelled = 0,
         KeepRunning = 1
     };
+
+    void startOperation(QString asUser);
+
+    void reportError(QString line);
 
     bool validateFileNames(const QStringList &fileNames);
 

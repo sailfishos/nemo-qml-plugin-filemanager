@@ -33,6 +33,170 @@
 #include "fileworker.h"
 #include <QDateTime>
 #include <QQmlInfo>
+#include <QCoreApplication>
+
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+namespace {
+
+bool switchUser(QString username)
+{
+    const QByteArray utf8UserName(username.toUtf8());
+    const char *user = utf8UserName.constData();
+
+    struct passwd pwd;
+    char buf[1024];
+    struct passwd *result = 0;
+
+    if (::getpwnam_r(user, &pwd, buf, sizeof(buf), &result) != 0) {
+        qWarning() << "Unable to find user:" << username << ::strerror(errno);
+        return false;
+    }
+    if (::initgroups(user, pwd.pw_gid) != 0) {
+        qWarning() << "Unable to initgroups for user:" << username << ::strerror(errno);
+        return false;
+    }
+    if (::setgid(pwd.pw_gid) != 0) {
+        qWarning() << "Unable to setgid for user:" << username << "group:" << pwd.pw_gid <<::strerror(errno);
+        return false;
+    }
+    if (::setuid(pwd.pw_uid) != 0) {
+        qWarning() << "Unable to setuid for user:" << username << ::strerror(errno);
+        return false;
+    }
+
+    qWarning() << "Executing as:" << username;
+    return true;
+}
+
+bool writeData(int fd, const QByteArray &data)
+{
+    if (data.isEmpty())
+        return true;
+
+    int rv = 0;
+    do {
+        rv = ::write(fd, data.constData(), data.size());
+        if (rv > 0)
+            return true;
+    } while (rv == -1 && errno == EINTR);
+
+    return false;
+}
+
+template<typename ChildFunc, typename ParentFunc>
+bool runForkTask(QString asUser, ChildFunc child, ParentFunc parent)
+{
+    // Fork a child process, switch to the indicated user, then perform the operation
+    int pipefd[2] = { -1, -1 };
+    if (::pipe(pipefd) != 0) {
+        qWarning() << "pipe failed:" << ::strerror(errno);
+        return false;
+    }
+
+    int pid = ::fork();
+    if (pid == -1) {
+        qWarning() << "fork failed:" << ::strerror(errno);
+        return false;
+    }
+
+    const int readHandle = pipefd[0];
+    const int writeHandle = pipefd[1];
+
+    if (pid == 0) {
+        // Child process - close the read handle
+        ::close(readHandle);
+
+        if (switchUser(asUser)) {
+            child(writeHandle);
+        } else {
+            const QString s(QString("error:%1:\n").arg(static_cast<int>(FileEngine::ErrorUserChangeFailed)));
+            writeData(writeHandle, s.toUtf8());
+        }
+
+        ::close(writeHandle);
+        ::_exit(EXIT_SUCCESS);
+    } else {
+        // Parent process - close the write handle
+        ::close(writeHandle);
+
+        // Read any responses from the child
+        QString buffered;
+
+        int rv = 0;
+        do {
+            char buf[1024];
+            buf[1023] = '\0';
+            rv = ::read(readHandle, buf, sizeof(buf) - 1);
+            if (rv > 0) {
+                buf[rv] = '\0';
+                buffered.append(QString::fromUtf8(buf));
+
+                int index = buffered.indexOf('\n');
+                while (index >= 0) {
+                    const QString line(buffered.left(index));
+                    buffered = buffered.mid(index + 1);
+                    index = buffered.indexOf('\n');
+
+                    parent(line);
+                }
+            }
+        } while (rv > 0);
+
+        if (!buffered.isEmpty()) {
+            qWarning() << "Incomplete child response:" << buffered;
+        }
+        ::close(readHandle);
+
+        // Wait for the child to finish
+        while (true) {
+            int childStatus = 0;
+            int rv = ::waitpid(pid, &childStatus, 0);
+            if (rv == pid) {
+                if (WIFEXITED(childStatus)) {
+                    if (WEXITSTATUS(childStatus) != 0) {
+                        qWarning() << "abnormal child return code:" << WEXITSTATUS(childStatus);
+                    }
+                } else {
+                    qWarning() << "abnormal child status:" << childStatus;
+                }
+                break;
+            } else if (errno != EINTR) {
+                qWarning() << "waitpid failed:" << ::strerror(errno);
+                break;
+            }
+        }
+    }
+    return true;
+}
+
+template<typename Task>
+bool runForkTask(QString asUser, Task task, bool &rv)
+{
+    rv = false;
+
+    auto runTask = [&task](int writeHandle) {
+        if (task()) {
+            writeData(writeHandle, QByteArray("true\n"));
+        }
+    };
+    auto reportResults = [&rv](QString line) {
+        if (line.startsWith("true")) {
+            rv = true;
+        }
+    };
+
+    return runForkTask(asUser, runTask, reportResults);
+}
+
+}
 
 FileWorker::FileWorker(QObject *parent) :
     QThread(parent),
@@ -64,7 +228,7 @@ void FileWorker::setMode(FileEngine::Mode mode)
     }
 }
 
-void FileWorker::startDeleteFiles(QStringList fileNames)
+void FileWorker::startDeleteFiles(QStringList fileNames, QString asUser)
 {
     if (isRunning()) {
         emit error(FileEngine::ErrorOperationInProgress, "");
@@ -77,10 +241,10 @@ void FileWorker::startDeleteFiles(QStringList fileNames)
     setMode(FileEngine::DeleteMode);
     m_fileNames = fileNames;
     m_cancelled.storeRelease(KeepRunning);
-    start();
+    startOperation(asUser);
 }
 
-void FileWorker::startCopyFiles(QStringList fileNames, QString destDirectory)
+void FileWorker::startCopyFiles(QStringList fileNames, QString destDirectory, QString asUser)
 {
     if (isRunning()) {
         emit error(FileEngine::ErrorOperationInProgress, "");
@@ -95,10 +259,10 @@ void FileWorker::startCopyFiles(QStringList fileNames, QString destDirectory)
     m_fileNames = fileNames;
     m_destDirectory = destDirectory;
     m_cancelled.storeRelease(KeepRunning);
-    start();
+    startOperation(asUser);
 }
 
-void FileWorker::startMoveFiles(QStringList fileNames, QString destDirectory)
+void FileWorker::startMoveFiles(QStringList fileNames, QString destDirectory, QString asUser)
 {
     if (isRunning()) {
         emit error(FileEngine::ErrorOperationInProgress, "");
@@ -113,7 +277,7 @@ void FileWorker::startMoveFiles(QStringList fileNames, QString destDirectory)
     m_fileNames = fileNames;
     m_destDirectory = destDirectory;
     m_cancelled.storeRelease(KeepRunning);
-    start();
+    startOperation(asUser);
 }
 
 void FileWorker::cancel()
@@ -121,22 +285,112 @@ void FileWorker::cancel()
     m_cancelled.storeRelease(Cancelled);
 }
 
-bool FileWorker::mkdir(QString path, QString name)
+bool FileWorker::mkdir(QString path, QString name, QString asUser)
 {
+    bool rv = false;
+
     QDir dir(path);
-    return dir.mkdir(name);
+    auto task = [&dir, &name]() { return dir.mkdir(name); };
+
+    if (asUser.isEmpty()) {
+        rv = task();
+    } else {
+        // Ensure that we're not running a thread, as that would confuse the fork/wait
+        wait();
+        if (!runForkTask(asUser, task, rv)) {
+            emit error(FileEngine::ErrorUserChangeFailed, "");
+        }
+    }
+    return rv;
 }
 
-bool FileWorker::rename(QString oldPath, QString newPath)
+bool FileWorker::rename(QString oldPath, QString newPath, QString asUser)
 {
+    bool rv = false;
+
     QFile file(oldPath);
-    return file.rename(newPath);
+    auto task = [&file, &newPath]() { return file.rename(newPath); };
+
+    if (asUser.isEmpty()) {
+        rv = task();
+    } else {
+        // Ensure that we're not running a thread, as that would confuse the fork/wait
+        wait();
+        if (!runForkTask(asUser, task, rv)) {
+            emit error(FileEngine::ErrorUserChangeFailed, "");
+        }
+    }
+    return rv;
 }
 
-bool FileWorker::setPermissions(QString path, QFileDevice::Permissions p)
+bool FileWorker::setPermissions(QString path, QFileDevice::Permissions p, QString asUser)
 {
+    bool rv = false;
+
     QFile file(path);
-    return file.setPermissions(p);
+    auto task = [&file, p]() { return file.setPermissions(p); };
+
+    if (asUser.isEmpty()) {
+        rv = task();
+    } else {
+        // Ensure that we're not running a thread, as that would confuse the fork/wait
+        wait();
+        if (!runForkTask(asUser, task, rv)) {
+            emit error(FileEngine::ErrorUserChangeFailed, "");
+        }
+    }
+    return rv;
+}
+
+void FileWorker::startOperation(QString asUser)
+{
+    if (asUser.isEmpty()) {
+        // Run threaded
+        start();
+        return;
+    }
+
+    auto runTask = [this](int writeHandle) {
+        // Report signals by sending back to parent process
+        connect(this, &FileWorker::fileDeleted, [writeHandle](QString fileName) {
+            const QString s(QString("deleted:%1\n").arg(fileName));
+            writeData(writeHandle, s.toUtf8());
+        });
+        connect(this, &FileWorker::error, [writeHandle](FileEngine::Error error, QString fileName) {
+            const QString s(QString("error:%1:%2\n").arg(static_cast<int>(error)).arg(fileName));
+            writeData(writeHandle, s.toUtf8());
+        });
+        connect(this, &FileWorker::done, [writeHandle]() {
+            const QByteArray ba("done\n");
+            writeData(writeHandle, ba);
+        });
+
+        run();
+    };
+
+    auto reportResults = [this](QString line) {
+        if (line.startsWith("deleted:")) {
+            const QString fileName(line.mid(8));
+            emit fileDeleted(fileName);
+        } else if (line.startsWith("error:")) {
+            reportError(line);
+        } else if (line.startsWith("done")) {
+            emit done();
+        }
+    };
+
+    if (!runForkTask(asUser, runTask, reportResults)) {
+        emit error(FileEngine::ErrorUserChangeFailed, "");
+    }
+}
+
+void FileWorker::reportError(QString line)
+{
+    const QString remainder(line.mid(6));
+    const int index = remainder.indexOf(':');
+    const QString errorCode(remainder.left(index));
+    const QString fileName(remainder.mid(index + 1));
+    emit error(static_cast<FileEngine::Error>(errorCode.toInt()), fileName);
 }
 
 void FileWorker::run()
@@ -150,6 +404,7 @@ void FileWorker::run()
     case FileEngine::CopyMode:
         copyOrMoveFiles();
         break;
+
     case FileEngine::IdleMode:
         qmlInfo(this) << "FileWorker run in IdleMode, should not happen";
         break;
@@ -189,8 +444,6 @@ bool FileWorker::deleteFile(QString fileName)
 
 void FileWorker::deleteFiles()
 {
-    int fileIndex = 0;
-
     foreach (QString fileName, m_fileNames) {
 
         // stop if cancelled
@@ -206,8 +459,6 @@ void FileWorker::deleteFiles()
             return;
         }
         emit fileDeleted(fileName);
-
-        fileIndex++;
     }
 
     emit done();
@@ -215,8 +466,6 @@ void FileWorker::deleteFiles()
 
 void FileWorker::copyOrMoveFiles()
 {
-    int fileIndex = 0;
-
     QDir dest(m_destDirectory);
     foreach (QString fileName, m_fileNames) {
 
@@ -263,8 +512,6 @@ void FileWorker::copyOrMoveFiles()
                 }
             }
         }
-
-        fileIndex++;
     }
 
     emit done();
