@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = plugin
+SUBDIRS = plugin daemon

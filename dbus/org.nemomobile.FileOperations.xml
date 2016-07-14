@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<node name="/org/nemomobile/FileOperations">
+  <interface name="org.nemomobile.FileOperations">
+    <method name="Copy">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="as" name="paths" direction="in" />
+      <arg type="s" name="destination" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="Move">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="as" name="paths" direction="in" />
+      <arg type="s" name="destination" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="Delete">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="as" name="paths" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="Mkdir">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="path" direction="in" />
+      <arg type="s" name="destination" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="Rename">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="oldPath" direction="in" />
+      <arg type="s" name="newPath" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="SetPermissions">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="s" name="path" direction="in" />
+      <arg type="u" name="mask" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <method name="Cancel">
+      <arg type="u" name="handle" direction="in" />
+    </method>
+
+    <signal name="Succeeded">
+      <arg type="u" name="handle" />
+      <arg type="as" name="paths" />
+    </signal>
+
+    <signal name="Failed">
+      <arg type="u" name="handle" />
+      <arg type="as" name="paths" />
+      <arg type="u" name="errorCode" />
+    </signal>
+
+    <signal name="Finished">
+      <arg type="u" name="handle" />
+    </signal>
+  </interface>
+</node>

@@ -57,6 +57,8 @@ public:
 
     enum Error {
         NoError,
+        ErrorInvalidRequest,
+        ErrorOperationCancelled,
         ErrorOperationInProgress,
         ErrorCopyFailed,
         ErrorDeleteFailed,
