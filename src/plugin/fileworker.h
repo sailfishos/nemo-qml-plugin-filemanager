@@ -33,9 +33,11 @@
 #ifndef FILEWORKER_H
 #define FILEWORKER_H
 
+#include "fileengine.h"
+#include "fileoperationsproxy.h"
+
 #include <QThread>
 #include <QDir>
-#include "fileengine.h"
 
 /**
  * @brief FileWorker does delete, copy and move files in the background.
@@ -49,16 +51,16 @@ public:
     ~FileWorker();
 
     // call these to start the thread, returns false if start failed
-    void startDeleteFiles(QStringList fileNames, QString asUser);
-    void startCopyFiles(QStringList fileNames, QString destDirectory, QString asUser);
-    void startMoveFiles(QStringList fileNames, QString destDirectory, QString asUser);
+    void startDeleteFiles(QStringList fileNames, bool nonprivileged);
+    void startCopyFiles(QStringList fileNames, QString destDirectory, bool nonprivileged);
+    void startMoveFiles(QStringList fileNames, QString destDirectory, bool nonprivileged);
 
     void cancel();
 
     // synchronous functions
-    bool mkdir(QString path, QString name, QString asUser);
-    bool rename(QString oldPath, QString newPath, QString asUser);
-    bool setPermissions(QString path, QFileDevice::Permissions p, QString asUser);
+    bool mkdir(QString path, QString name, bool nonprivileged);
+    bool rename(QString oldPath, QString newPath, bool nonprivileged);
+    bool setPermissions(QString path, QFileDevice::Permissions p, bool nonprivileged);
 
     FileEngine::Mode mode() const;
 
@@ -74,6 +76,10 @@ signals:
 protected slots:
     void handleFinished();
 
+    void fileOperationFailed(unsigned id, const QStringList &paths, unsigned errorCode);
+    void fileOperationSucceeded(unsigned id, const QStringList &paths);
+    void operationFinished(unsigned id);
+
 protected:
     void run();
 
@@ -83,19 +89,17 @@ private:
         KeepRunning = 1
     };
 
-    void startOperation(QString asUser);
+    bool operationInProgress();
+    void startOperation(bool nonprivileged);
 
-    void reportError(QString line);
+    bool waitForOperation(unsigned id);
 
     bool validateFileNames(const QStringList &fileNames);
 
-    bool deleteFile(QString fileNames);
-    void deleteFiles();
-    void copyOrMoveFiles();
-    bool copyDirRecursively(QString srcDirectory, QString destDirectory);
-    bool copyOverwrite(QString src, QString dest);
     void setMode(FileEngine::Mode mode);
 
+    FileOperationsProxy m_proxy;
+    unsigned m_operation;
     FileEngine::Mode m_mode;
     QStringList m_fileNames;
     QString m_destDirectory;

@@ -17,14 +17,17 @@ system(qdbusxml2cpp -c FileOperationsAdaptor -a fileoperationsadaptor.h:fileoper
 
 HEADERS =\
     fileoperationsadaptor.h \
-    fileoperationsservice.h
+    fileoperationsservice.h \
+    fileoperations.h
 
 SOURCES =\
     fileoperationsadaptor.cpp \
     fileoperationsservice.cpp \
+    fileoperations.cpp \
     main.cpp
 
-INCLUDEPATH += ../plugin
+INCLUDEPATH += ../plugin ../shared
+VPATH += ../shared
 
 SERVICE_FILE = ../../dbus/org.nemomobile.FileOperations.service
 INTERFACE_FILE = ../../dbus/org.nemomobile.FileOperations.xml

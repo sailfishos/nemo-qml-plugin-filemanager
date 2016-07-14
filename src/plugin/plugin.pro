@@ -3,7 +3,7 @@ PLUGIN_IMPORT_PATH = Nemo/FileManager
 
 TEMPLATE = lib
 CONFIG += qt plugin hide_symbols c++11
-QT += qml
+QT += qml dbus
 
 CONFIG += link_pkgconfig
 PKGCONFIG += contactcache-qt5
@@ -18,12 +18,15 @@ qmldir.files += $$_PRO_FILE_PWD_/qmldir
 qmldir.path +=  $$target.path
 INSTALLS += qmldir
 
-SOURCES += plugin.cpp filemodel.cpp fileengine.cpp \
-           fileworker.cpp statfileinfo.cpp
+system(qdbusxml2cpp -c FileOperationsProxy -p fileoperationsproxy.h:fileoperationsproxy.cpp ../../dbus/org.nemomobile.FileOperations.xml)
 
-HEADERS += filemodel.h fileengine.h fileworker.h \
-           statfileinfo.h
+SOURCES += plugin.cpp filemodel.cpp fileengine.cpp fileoperations.cpp \
+           fileworker.cpp statfileinfo.cpp fileoperationsproxy.cpp
 
-INCLUDEPATH += $$PWD
+HEADERS += filemodel.h fileengine.h fileworker.h fileoperations.h \
+           statfileinfo.h fileoperationsproxy.h
+
+INCLUDEPATH += $$PWD ../shared
+VPATH += ../shared
 
 OTHER_FILES += ../../example/*/*.qml

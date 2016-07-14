@@ -32,8 +32,7 @@
 
 #include "fileoperationsservice.h"
 #include "fileoperationsadaptor.h"
-
-#include "fileengine.h"
+#include "fileoperations.h"
 
 namespace {
 
@@ -329,8 +328,40 @@ void FileOperationsService::processRequests()
 
 void FileOperationsService::processOperation(OperationRequest *request, OperationResponse *response)
 {
-    Q_UNUSED(request)
-    Q_UNUSED(response)
+    FileOperations::ContinueFunc continueFn = [response]() { return response->continueOperation(); };
+    FileOperations::PathResultFunc pathResultFn = [response](const QString &path, bool success) {
+        if (success) {
+            response->successPaths.append(path);
+        } else {
+            response->failedPaths.append(path);
+        }
+    };
+
+    switch (request->type) {
+    case OperationRequest::Copy:
+        response->error = FileOperations::copyFiles(request->paths, request->destination, pathResultFn, continueFn);
+        break;
+
+    case OperationRequest::Move:
+        response->error = FileOperations::moveFiles(request->paths, request->destination, pathResultFn, continueFn);
+        break;
+
+    case OperationRequest::Delete:
+        response->error = FileOperations::deleteFiles(request->paths, pathResultFn, continueFn);
+        break;
+
+    case OperationRequest::Mkdir:
+        response->error = FileOperations::createDirectory(request->paths.first(), request->destination, pathResultFn);
+        break;
+
+    case OperationRequest::Rename:
+        response->error = FileOperations::renameFile(request->paths.first(), request->destination, pathResultFn);
+        break;
+
+    case OperationRequest::SetPermissions:
+        response->error = FileOperations::chmodFile(request->paths.first(), static_cast<QFileDevice::Permissions>(request->mask), pathResultFn);
+        break;
+    }
 }
 
 void FileOperationsService::timerEvent(QTimerEvent *event)
