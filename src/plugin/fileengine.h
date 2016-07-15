@@ -57,6 +57,8 @@ public:
 
     enum Error {
         NoError,
+        ErrorInvalidRequest,
+        ErrorOperationCancelled,
         ErrorOperationInProgress,
         ErrorCopyFailed,
         ErrorDeleteFailed,
@@ -65,7 +67,7 @@ public:
         ErrorCannotCopyIntoItself,
         ErrorFolderCopyFailed,
         ErrorFolderCreationFailed,
-        ErrorChmodFailed
+        ErrorChmodFailed,
     };
 
     enum Mode {
@@ -84,22 +86,22 @@ public:
     // methods accessible from QML
 
     // asynch methods send signals when done or error occurs
-    Q_INVOKABLE void deleteFiles(QStringList fileNames);
+    Q_INVOKABLE void deleteFiles(QStringList fileNames, bool nonprivileged = false);
     Q_INVOKABLE void cutFiles(QStringList fileNames);
     Q_INVOKABLE void copyFiles(QStringList fileNames);
-    Q_INVOKABLE void pasteFiles(QString destDirectory);
+    Q_INVOKABLE void pasteFiles(QString destDirectory, bool nonprivileged = false);
 
     // cancel asynch methods
     Q_INVOKABLE void cancel();
 
     // synchronous methods
     Q_INVOKABLE bool exists(QString fileName);
-    Q_INVOKABLE bool mkdir(QString path, QString name);
-    Q_INVOKABLE bool rename(QString fullOldFileName, QString newName);
+    Q_INVOKABLE bool mkdir(QString path, QString name, bool nonprivileged = false);
+    Q_INVOKABLE bool rename(QString fullOldFileName, QString newName, bool nonprivileged = false);
     Q_INVOKABLE bool chmod(QString path,
                               bool ownerRead, bool ownerWrite, bool ownerExecute,
                               bool groupRead, bool groupWrite, bool groupExecute,
-                              bool othersRead, bool othersWrite, bool othersExecute);
+                              bool othersRead, bool othersWrite, bool othersExecute, bool nonprivileged = false);
 
 
 signals:

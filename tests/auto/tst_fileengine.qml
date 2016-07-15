@@ -87,102 +87,125 @@ Item {
         }
 
         function test_copying() {
-
             // initial state
             verify(!FileEngine.clipboardContainsCopy)
             compare(FileEngine.clipboardCount, 0)
 
-            // copy second file
-            tryCompare(fileModel, "populated", true)
-            var fileName = repeater.itemAt(1).fileName
-            FileEngine.copyFiles([ fileModel.fileNameAt(1) ])
+            var originalPath = fileModel.path
 
-            verify(FileEngine.clipboardContainsCopy)
-            compare(FileEngine.clipboardCount, 1)
+            for (var i = 0; i < 2; ++i) {
+                var nonprivileged = (i == 1)
 
-            // go to sub-folder, paste the file
-            fileModel.path = fileModel.appendPath("subfolder")
-            wait(0)
-            compare(fileModel.count, 1)
-            FileEngine.pasteFiles(fileModel.path)
+                // copy second file
+                fileModel.path = originalPath
+                tryCompare(fileModel, "populated", true)
 
-            // wait for the file operation to finish
-            workerDoneSpy.wait()
+                var fileName = repeater.itemAt(1).fileName
+                FileEngine.copyFiles([ fileModel.fileNameAt(1) ])
 
-            // check that new file has appeared
-            var newFileName = fileModel.path + "/" + fileName
-            wait(0)
-            compare(fileModel.count, 2)
-            compare(fileModel.fileNameAt(0), newFileName)
+                verify(FileEngine.clipboardContainsCopy)
+                compare(FileEngine.clipboardCount, 1)
 
-            // delete newly copied file
-            FileEngine.deleteFiles([ newFileName ])
+                // go to sub-folder, paste the file
+                fileModel.path = fileModel.appendPath("subfolder")
+                wait(0)
+                compare(fileModel.count, 1)
+                FileEngine.pasteFiles(fileModel.path, nonprivileged)
 
-            // wait for the deletion to finish
-            workerDoneSpy.wait()
-            wait(0)
-            compare(fileModel.count, 1)
+                // wait for the file operation to finish
+                workerDoneSpy.wait()
+                workerDoneSpy.clear()
+
+                // check that new file has appeared
+                var newFileName = fileModel.path + "/" + fileName
+                wait(0)
+                compare(fileModel.count, 2)
+                compare(fileModel.fileNameAt(0), newFileName)
+
+                // delete newly copied file
+                FileEngine.deleteFiles([ newFileName ], nonprivileged)
+
+                // wait for the deletion to finish
+                workerDoneSpy.wait()
+                wait(0)
+                compare(fileModel.count, 1)
+            }
         }
 
         function test_mkdir() {
 
-            fileModel.path = fileModel.appendPath("subfolder")
-            wait(0)
-            compare(fileModel.count, 1)
+            var originalPath = fileModel.path
 
-            // create folder
-            var name = "yetanotherdirectory"
-            var success = FileEngine.mkdir(fileModel.path, name)
-            verify(success)
+            for (var i = 0; i < 2; ++i) {
+                var nonprivileged = (i == 1)
 
-            // check that folder got created
-            fileCountSpy.clear()
-            fileCountSpy.wait()
-            wait(0)
-            compare(fileModel.count, 2)
-            compare(repeater.itemAt(1).fileName, name)
+                fileModel.path = originalPath
+                fileModel.path = fileModel.appendPath("subfolder")
+                wait(0)
+                compare(fileModel.count, 1)
 
-            // delete the folder
-            FileEngine.deleteFiles([ fileModel.fileNameAt(1) ])
+                fileCountSpy.clear()
 
-            // wait for the deletion to finish
-            workerDoneSpy.wait()
-            wait(0)
-            compare(fileModel.count, 1)
+                // create folder
+                var name = "yetanotherdirectory"
+                var success = FileEngine.mkdir(fileModel.path, name, nonprivileged)
+                verify(success)
+
+                // check that folder got created
+                fileCountSpy.wait()
+                wait(0)
+                compare(fileModel.count, 2)
+                compare(repeater.itemAt(1).fileName, name)
+
+                // delete the folder
+                FileEngine.deleteFiles([ fileModel.fileNameAt(1) ], nonprivileged)
+
+                // wait for the deletion to finish
+                workerDoneSpy.wait()
+                wait(0)
+                compare(fileModel.count, 1)
+            }
         }
 
         function test_errors() {
-            compare(lastError, FileEngine.NoError)
 
-            // Copying folder inside itself
-            FileEngine.copyFiles([ fileModel.fileNameAt(3) ])
-            FileEngine.pasteFiles([ fileModel.fileNameAt(3) ])
-            compare(lastError, FileEngine.ErrorCannotCopyIntoItself)
+            var originalPath = fileModel.path
 
-            // Copying a file to protected path
-            var protectedFolder =  fileModel.parentPath() + "/protectedfolder"
-            FileEngine.copyFiles([ fileModel.fileNameAt(0) ])
-            FileEngine.pasteFiles([ protectedFolder ])
-            errorSpy.clear()
-            errorSpy.wait()
-            compare(lastError, FileEngine.ErrorCopyFailed)
+            for (var i = 0; i < 2; ++i) {
+                var nonprivileged = (i == 1)
 
-            // Copying a folder to protected path
-            FileEngine.copyFiles([ fileModel.fileNameAt(3) ])
-            FileEngine.pasteFiles([ protectedFolder ])
-            errorSpy.clear()
-            errorSpy.wait()
-            compare(lastError, FileEngine.ErrorFolderCopyFailed)
+                lastError = FileEngine.NoError
 
-            // Creating a folder inside protected folder
-            FileEngine.mkdir(protectedFolder, "test")
-            compare(lastError, FileEngine.ErrorFolderCreationFailed)
+                // Copying folder inside itself
+                FileEngine.copyFiles([ fileModel.fileNameAt(3) ])
+                FileEngine.pasteFiles([ fileModel.fileNameAt(3) ])
+                compare(lastError, FileEngine.ErrorCannotCopyIntoItself)
 
-            // Deleting a protected file
-            FileEngine.deleteFiles( [ protectedFolder ])
-            errorSpy.clear()
-            errorSpy.wait()
-            compare(lastError, FileEngine.ErrorDeleteFailed)
+                // Copying a file to protected path
+                var protectedFolder =  fileModel.parentPath() + "/protectedfolder"
+                FileEngine.copyFiles([ fileModel.fileNameAt(0) ])
+                FileEngine.pasteFiles([ protectedFolder ])
+                errorSpy.clear()
+                errorSpy.wait()
+                compare(lastError, FileEngine.ErrorCopyFailed)
+
+                // Copying a folder to protected path
+                FileEngine.copyFiles([ fileModel.fileNameAt(3) ])
+                FileEngine.pasteFiles([ protectedFolder ])
+                errorSpy.clear()
+                errorSpy.wait()
+                compare(lastError, FileEngine.ErrorFolderCopyFailed)
+
+                // Creating a folder inside protected folder
+                FileEngine.mkdir(protectedFolder, "test")
+                compare(lastError, FileEngine.ErrorFolderCreationFailed)
+
+                // Deleting a protected file
+                FileEngine.deleteFiles( [ protectedFolder ])
+                errorSpy.clear()
+                errorSpy.wait()
+                compare(lastError, FileEngine.ErrorDeleteFailed)
+            }
         }
     }
 }

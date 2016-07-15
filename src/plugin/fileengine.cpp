@@ -76,9 +76,9 @@ bool FileEngine::busy() const
     return m_fileWorker->isRunning();
 }
 
-void FileEngine::deleteFiles(QStringList fileNames)
+void FileEngine::deleteFiles(QStringList fileNames, bool nonprivileged)
 {
-    m_fileWorker->startDeleteFiles(fileNames);
+    m_fileWorker->startDeleteFiles(fileNames, nonprivileged);
 }
 
 void FileEngine::cutFiles(QStringList fileNames)
@@ -108,7 +108,7 @@ void FileEngine::copyFiles(QStringList fileNames)
     }
 }
 
-void FileEngine::pasteFiles(QString destDirectory)
+void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
 {
     if (m_clipboardFiles.isEmpty()) {
         qmlInfo(this) << "Paste called with empty clipboard.";
@@ -149,11 +149,11 @@ void FileEngine::pasteFiles(QString destDirectory)
     emit clipboardCountChanged();
 
     if (m_clipboardContainsCopy) {
-        m_fileWorker->startCopyFiles(files, destDirectory);
+        m_fileWorker->startCopyFiles(files, destDirectory, nonprivileged);
         return;
     }
 
-    m_fileWorker->startMoveFiles(files, destDirectory);
+    m_fileWorker->startMoveFiles(files, destDirectory, nonprivileged);
 }
 
 void FileEngine::cancel()
@@ -170,26 +170,21 @@ bool FileEngine::exists(QString fileName)
     return QFile::exists(fileName);
 }
 
-bool FileEngine::mkdir(QString path, QString name)
+bool FileEngine::mkdir(QString path, QString name, bool nonprivileged)
 {
-    QDir dir(path);
-
-    if (!dir.mkdir(name)) {
+    if (!m_fileWorker->mkdir(path, name, nonprivileged)) {
         emit error(ErrorFolderCreationFailed, name);
         return false;
     }
-
     return true;
 }
 
-bool FileEngine::rename(QString fullOldFileName, QString newName)
+bool FileEngine::rename(QString fullOldFileName, QString newName, bool nonprivileged)
 {
-    QFile file(fullOldFileName);
     QFileInfo fileInfo(fullOldFileName);
     QDir dir = fileInfo.absoluteDir();
     QString fullNewFileName = dir.absoluteFilePath(newName);
-
-    if (!file.rename(fullNewFileName)) {
+    if (!m_fileWorker->rename(fullOldFileName, fullNewFileName, nonprivileged)) {
         emit error(ErrorRenameFailed, fileInfo.fileName());
         return false;
     }
@@ -199,9 +194,8 @@ bool FileEngine::rename(QString fullOldFileName, QString newName)
 bool FileEngine::chmod(QString path,
                       bool ownerRead, bool ownerWrite, bool ownerExecute,
                       bool groupRead, bool groupWrite, bool groupExecute,
-                      bool othersRead, bool othersWrite, bool othersExecute)
+                      bool othersRead, bool othersWrite, bool othersExecute, bool nonprivileged)
 {
-    QFile file(path);
     QFileDevice::Permissions p;
     if (ownerRead) p |= QFileDevice::ReadOwner;
     if (ownerWrite) p |= QFileDevice::WriteOwner;
@@ -212,7 +206,7 @@ bool FileEngine::chmod(QString path,
     if (othersRead) p |= QFileDevice::ReadOther;
     if (othersWrite) p |= QFileDevice::WriteOther;
     if (othersExecute) p |= QFileDevice::ExeOther;
-    if (!file.setPermissions(p)) {
+    if (!m_fileWorker->setPermissions(path, p, nonprivileged)) {
         emit error(ErrorChmodFailed, path);
         return false;
     }

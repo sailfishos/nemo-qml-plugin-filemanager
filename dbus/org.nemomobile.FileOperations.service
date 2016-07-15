@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.nemomobile.FileOperations
+Exec=/usr/bin/invoker -s --type=qt5 /usr/bin/fileoperationsd
