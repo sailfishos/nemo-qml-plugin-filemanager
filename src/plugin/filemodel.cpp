@@ -541,7 +541,7 @@ QDir FileModel::directory() const
 
         if (m_includeDirectories) {
             filters |= QDir::AllDirs;
-            if (!m_includeParentDirectory) {
+            if (!m_includeParentDirectory || dir.isRoot()) {
                 filters |= QDir::NoDotDot;
             }
         }
