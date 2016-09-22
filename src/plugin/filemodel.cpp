@@ -53,7 +53,9 @@ enum {
     SymLinkTargetRole = Qt::UserRole + 8,
     IsSelectedRole = Qt::UserRole + 9,
     ExtensionRole = Qt::UserRole + 10,
-    AbsolutePathRole = Qt::UserRole + 11
+    AbsolutePathRole = Qt::UserRole + 11,
+    LastAccessedRole = Qt::UserRole + 12,
+    BaseNameRole = Qt::UserRole + 13
 };
 
 int access(QString fileName, int how)
@@ -93,6 +95,8 @@ FileModel::FileModel(QObject *parent) :
     m_caseSensitivity(Qt::CaseSensitive),
     m_includeDirectories(true),
     m_includeParentDirectory(false),
+    m_includeHiddenFiles(false),
+    m_includeSystemFiles(false),
     m_active(false),
     m_dirty(false),
     m_populated(false),
@@ -155,6 +159,12 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     case AbsolutePathRole:
         return info.absoluteFilePath();
 
+    case LastAccessedRole:
+        return info.lastAccessed();
+
+    case BaseNameRole:
+        return info.baseName();
+
     default:
         return QVariant();
     }
@@ -174,6 +184,8 @@ QHash<int, QByteArray> FileModel::roleNames() const
     roles.insert(IsSelectedRole, QByteArray("isSelected"));
     roles.insert(ExtensionRole, QByteArray("extension"));
     roles.insert(AbsolutePathRole, QByteArray("absolutePath"));
+    roles.insert(LastAccessedRole, QByteArray("accessed"));
+    roles.insert(BaseNameRole, QByteArray("baseName"));
     return roles;
 }
 
@@ -202,6 +214,7 @@ void FileModel::setPath(QString path)
     m_path = path;
     m_absolutePath = QString();
     m_directory = QString();
+    m_parentPath = QString();
     scheduleUpdate(PathChanged);
 }
 
@@ -248,6 +261,24 @@ void FileModel::setIncludeParentDirectory(bool include)
 
     m_includeParentDirectory = include;
     scheduleUpdate(IncludeParentDirectoryChanged | ContentChanged);
+}
+
+void FileModel::setIncludeHiddenFiles(bool include)
+{
+    if (m_includeHiddenFiles == include)
+        return;
+
+    m_includeHiddenFiles = include;
+    scheduleUpdate(IncludeHiddenFilesChanged | ContentChanged);
+}
+
+void FileModel::setIncludeSystemFiles(bool include)
+{
+    if (m_includeSystemFiles == include)
+        return;
+
+    m_includeSystemFiles = include;
+    scheduleUpdate(IncludeSystemFilesChanged | ContentChanged);
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -433,6 +464,7 @@ void FileModel::readAllEntries()
 
     m_absolutePath = dir.absolutePath();
     m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
+    m_parentPath = dir.isRoot() ? QString() : QDir::cleanPath(dir.absoluteFilePath(QStringLiteral("..")));
     m_files = directoryEntries(dir);
 }
 
@@ -511,9 +543,16 @@ QDir FileModel::directory() const
 
         if (m_includeDirectories) {
             filters |= QDir::AllDirs;
-            if (!m_includeParentDirectory) {
+            if (!m_includeParentDirectory || dir.isRoot()) {
                 filters |= QDir::NoDotDot;
             }
+        }
+
+        if (m_includeHiddenFiles) {
+            filters |= QDir::Hidden;
+        }
+        if (m_includeSystemFiles) {
+            filters |= QDir::System;
         }
 
         QDir::SortFlags sortFlags(QDir::LocaleAware);
@@ -562,7 +601,7 @@ void FileModel::scheduleUpdate(ChangedFlags flags)
 
 void FileModel::update()
 {
-    if (!m_populated) {
+    if (!m_populated || (m_changedFlags & SortOrderChanged)) {
         // Do a complete refresh
         readDirectory();
     } else if (m_changedFlags & ContentChanged) {
@@ -588,6 +627,12 @@ void FileModel::update()
     }
     if (m_changedFlags & IncludeParentDirectoryChanged) {
         emit includeParentDirectoryChanged();
+    }
+    if (m_changedFlags & IncludeHiddenFilesChanged) {
+        emit includeHiddenFilesChanged();
+    }
+    if (m_changedFlags & IncludeSystemFilesChanged) {
+        emit includeSystemFilesChanged();
     }
     if (m_changedFlags & DirectorySortChanged) {
         emit directorySortChanged();

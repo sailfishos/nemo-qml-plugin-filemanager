@@ -58,11 +58,14 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
     Q_PROPERTY(QString absolutePath READ absolutePath NOTIFY pathChanged)
     Q_PROPERTY(QString directoryName READ directoryName NOTIFY pathChanged)
+    Q_PROPERTY(QString parentDirectoryName READ parentDirectoryName NOTIFY pathChanged)
     Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
     Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeDirectoriesChanged)
     Q_PROPERTY(bool includeParentDirectory READ includeParentDirectory WRITE setIncludeParentDirectory NOTIFY includeParentDirectoryChanged)
+    Q_PROPERTY(bool includeHiddenFiles READ includeHiddenFiles WRITE setIncludeHiddenFiles NOTIFY includeHiddenFilesChanged)
+    Q_PROPERTY(bool includeSystemFiles READ includeSystemFiles WRITE setIncludeSystemFiles NOTIFY includeSystemFilesChanged)
     Q_PROPERTY(DirectorySort directorySort READ directorySort WRITE setDirectorySort NOTIFY directorySortChanged)
     Q_PROPERTY(QStringList nameFilters READ nameFilters WRITE setNameFilters NOTIFY nameFiltersChanged)
     Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
@@ -107,6 +110,7 @@ public:
 
     QString absolutePath() const { return m_absolutePath; }
     QString directoryName() const { return m_directory; }
+    QString parentDirectoryName() const { return m_parentPath; }
 
     Sort sortBy() const { return m_sortBy; }
     void setSortBy(Sort sortBy);
@@ -122,6 +126,12 @@ public:
 
     bool includeParentDirectory() const { return m_includeParentDirectory; }
     void setIncludeParentDirectory(bool include);
+
+    bool includeHiddenFiles() const { return m_includeHiddenFiles; }
+    void setIncludeHiddenFiles(bool include);
+
+    bool includeSystemFiles() const { return m_includeSystemFiles; }
+    void setIncludeSystemFiles(bool include);
 
     DirectorySort directorySort() const { return m_directorySort; }
     void setDirectorySort(DirectorySort sort);
@@ -165,6 +175,8 @@ signals:
     void caseSensitivityChanged();
     void includeDirectoriesChanged();
     void includeParentDirectoryChanged();
+    void includeHiddenFilesChanged();
+    void includeSystemFilesChanged();
     void directorySortChanged();
     void nameFiltersChanged();
     void populatedChanged();
@@ -184,13 +196,15 @@ public:
         CaseSensitivityChanged        = (1 << 3),
         IncludeDirectoriesChanged     = (1 << 4),
         IncludeParentDirectoryChanged = (1 << 5),
-        DirectorySortChanged          = (1 << 6),
-        NameFiltersChanged            = (1 << 7),
-        PopulatedChanged              = (1 << 8),
-        CountChanged                  = (1 << 9),
-        ActiveChanged                 = (1 << 10),
-        SelectedCountChanged          = (1 << 11),
-        ContentChanged                = (1 << 12),
+        IncludeHiddenFilesChanged     = (1 << 6),
+        IncludeSystemFilesChanged     = (1 << 7),
+        DirectorySortChanged          = (1 << 8),
+        NameFiltersChanged            = (1 << 9),
+        PopulatedChanged              = (1 << 10),
+        CountChanged                  = (1 << 11),
+        ActiveChanged                 = (1 << 12),
+        SelectedCountChanged          = (1 << 13),
+        ContentChanged                = (1 << 14),
     };
     Q_DECLARE_FLAGS(ChangedFlags, Changed);
 
@@ -210,12 +224,15 @@ private:
     QString m_path;
     QString m_absolutePath;
     QString m_directory;
+    QString m_parentPath;
     Sort m_sortBy;
     DirectorySort m_directorySort;
     Qt::SortOrder m_sortOrder;
     Qt::CaseSensitivity m_caseSensitivity;
     bool m_includeDirectories;
     bool m_includeParentDirectory;
+    bool m_includeHiddenFiles;
+    bool m_includeSystemFiles;
     bool m_active;
     bool m_dirty;
     bool m_populated;

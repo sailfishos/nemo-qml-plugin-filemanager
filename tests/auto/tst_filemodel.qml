@@ -49,6 +49,8 @@ Item {
         model: fileModel
         Item {
             property string fileName: model.fileName
+            property string baseName: model.baseName
+            property string extension: model.extension
             property string mimeType: model.mimeType
             property int size: model.size
             property bool isDir: model.isDir
@@ -65,10 +67,13 @@ Item {
         }
 
         property var results: [
-            {fileName: "a", mimeType: "application/x-zerosize", size: 0, isDir: false},
-            {fileName: "b", mimeType: "text/plain", size: 2, isDir: false},
-            {fileName: "c", mimeType: "text/plain", size: 4, isDir: false},
-            {fileName: "subfolder", mimeType: "inode/directory", size: 4096, isDir: true}
+            {fileName: "a", baseName: "a", extension: "", mimeType: "application/x-zerosize", size: 0, isDir: false},
+            {fileName: "b", baseName: "b", extension: "", mimeType: "text/plain", size: 2, isDir: false},
+            {fileName: "c", baseName: "c", extension: "", mimeType: "text/plain", size: 4, isDir: false},
+            {fileName: "subfolder", baseName: "subfolder", extension: "", mimeType: "inode/directory", size: 4096, isDir: true},
+            {fileName: ".hidden.xml", baseName: ".hidden", extension: "xml", mimeType: "application/xml", size: 52, isDir: false},
+            {fileName: ".tarball.tar.bz2", baseName: ".tarball.tar", extension: "bz2", mimeType: "application/x-bzip-compressed-tar", size: 109, isDir: false},
+            {fileName: ".hidden", baseName: ".hidden", extension: "", mimeType: "text/plain", size: 6, isDir: false}
         ]
 
         function test_listing() {
@@ -77,10 +82,12 @@ Item {
                 compare(fileModel.count, indices.length, name)
 
                 for (var i = 0; i < indices.length; i++) {
-                    var message = name + ': failed at index:' + i + '(result[' + indices[i] + '])'
+                    var message = name + ': failed at index:' + i + ' (result[' + indices[i] + '])'
                     var actual = repeater.itemAt(i)
                     var expected = results[indices[i]]
                     compare(actual.fileName, expected.fileName, message)
+                    compare(actual.baseName, expected.baseName, message)
+                    compare(actual.extension, expected.extension, message)
                     compare(actual.mimeType, expected.mimeType, message)
                     compare(actual.size, expected.size, message)
                     compare(actual.isDir, expected.isDir, message)
@@ -94,6 +101,14 @@ Item {
             fileModel.sortOrder = Qt.DescendingOrder
             check([0, 1, 2], 'Reverse by size')
 
+            fileModel.includeHiddenFiles = true
+            fileModel.sortBy = FileModel.SortByName
+            check([2, 1, 0, 5, 4, 6], 'Reverse by name with hidden')
+
+            fileModel.sortBy = FileModel.SortBySize
+            check([0, 1, 2, 6, 4, 5], 'Reverse by size with hidden')
+
+            fileModel.includeHiddenFiles = false
             fileModel.directorySort = FileModel.SortDirectoriesBeforeFiles
             fileModel.includeDirectories = true
             check([3, 0, 1, 2], 'Reverse by size after directories')
