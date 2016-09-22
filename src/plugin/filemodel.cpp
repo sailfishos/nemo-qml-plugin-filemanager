@@ -94,6 +94,7 @@ FileModel::FileModel(QObject *parent) :
     m_includeDirectories(true),
     m_includeParentDirectory(false),
     m_includeHiddenFiles(false),
+    m_includeSystemFiles(false),
     m_active(false),
     m_dirty(false),
     m_populated(false),
@@ -258,6 +259,15 @@ void FileModel::setIncludeHiddenFiles(bool include)
 
     m_includeHiddenFiles = include;
     scheduleUpdate(IncludeHiddenFilesChanged | ContentChanged);
+}
+
+void FileModel::setIncludeSystemFiles(bool include)
+{
+    if (m_includeSystemFiles == include)
+        return;
+
+    m_includeSystemFiles = include;
+    scheduleUpdate(IncludeSystemFilesChanged | ContentChanged);
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -529,6 +539,9 @@ QDir FileModel::directory() const
         if (m_includeHiddenFiles) {
             filters |= QDir::Hidden;
         }
+        if (m_includeSystemFiles) {
+            filters |= QDir::System;
+        }
 
         QDir::SortFlags sortFlags(QDir::LocaleAware);
 
@@ -605,6 +618,9 @@ void FileModel::update()
     }
     if (m_changedFlags & IncludeHiddenFilesChanged) {
         emit includeHiddenFilesChanged();
+    }
+    if (m_changedFlags & IncludeSystemFilesChanged) {
+        emit includeSystemFilesChanged();
     }
     if (m_changedFlags & DirectorySortChanged) {
         emit directorySortChanged();
