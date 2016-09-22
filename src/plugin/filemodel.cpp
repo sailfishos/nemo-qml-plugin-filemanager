@@ -599,7 +599,7 @@ void FileModel::scheduleUpdate(ChangedFlags flags)
 
 void FileModel::update()
 {
-    if (!m_populated) {
+    if (!m_populated || (m_changedFlags & SortOrderChanged)) {
         // Do a complete refresh
         readDirectory();
     } else if (m_changedFlags & ContentChanged) {
