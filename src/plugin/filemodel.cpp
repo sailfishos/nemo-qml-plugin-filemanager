@@ -53,7 +53,9 @@ enum {
     SymLinkTargetRole = Qt::UserRole + 8,
     IsSelectedRole = Qt::UserRole + 9,
     ExtensionRole = Qt::UserRole + 10,
-    AbsolutePathRole = Qt::UserRole + 11
+    AbsolutePathRole = Qt::UserRole + 11,
+    LastAccessedRole = Qt::UserRole + 12,
+    BaseNameRole = Qt::UserRole + 13
 };
 
 int access(QString fileName, int how)
@@ -157,6 +159,12 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     case AbsolutePathRole:
         return info.absoluteFilePath();
 
+    case LastAccessedRole:
+        return info.lastAccessed();
+
+    case BaseNameRole:
+        return info.baseName();
+
     default:
         return QVariant();
     }
@@ -176,6 +184,8 @@ QHash<int, QByteArray> FileModel::roleNames() const
     roles.insert(IsSelectedRole, QByteArray("isSelected"));
     roles.insert(ExtensionRole, QByteArray("extension"));
     roles.insert(AbsolutePathRole, QByteArray("absolutePath"));
+    roles.insert(LastAccessedRole, QByteArray("accessed"));
+    roles.insert(BaseNameRole, QByteArray("baseName"));
     return roles;
 }
 

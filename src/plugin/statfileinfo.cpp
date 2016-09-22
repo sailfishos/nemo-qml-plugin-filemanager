@@ -59,6 +59,18 @@ bool StatFileInfo::exists() const
     return m_fileInfo.exists();
 }
 
+QString StatFileInfo::extension() const
+{
+    // If there is only one token following a dot, prefer it to be the baseName
+    return m_fileInfo.completeBaseName().isEmpty() ? QString() : m_fileInfo.suffix();
+}
+
+QString StatFileInfo::baseName() const
+{
+    QString rv(m_fileInfo.completeBaseName());
+    return rv.isEmpty() ? m_fileInfo.fileName() : rv;
+}
+
 bool StatFileInfo::isSafeToRead() const
 {
     // it is safe to read non-existing files

@@ -97,8 +97,10 @@ public:
     uint ownerId() const { return m_fileInfo.ownerId(); }
     qint64 size() const { return m_fileInfo.size(); }
     QDateTime lastModified() const { return m_fileInfo.lastModified(); }
+    QDateTime lastAccessed() const { return m_fileInfo.lastRead(); }
     QDateTime created() const { return m_fileInfo.created(); }
-    QString extension() const { return m_fileInfo.suffix(); }
+    QString extension() const;
+    QString baseName() const;
     bool exists() const;
     bool isSafeToRead() const;
 
