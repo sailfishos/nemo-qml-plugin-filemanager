@@ -68,7 +68,8 @@ Item {
             {fileName: "a", mimeType: "application/x-zerosize", size: 0, isDir: false},
             {fileName: "b", mimeType: "text/plain", size: 2, isDir: false},
             {fileName: "c", mimeType: "text/plain", size: 4, isDir: false},
-            {fileName: "subfolder", mimeType: "inode/directory", size: 4096, isDir: true}
+            {fileName: "subfolder", mimeType: "inode/directory", size: 4096, isDir: true},
+            {fileName: ".hidden.xml", mimeType: "application/xml", size: 52, isDir: false}
         ]
 
         function test_listing() {
@@ -77,7 +78,7 @@ Item {
                 compare(fileModel.count, indices.length, name)
 
                 for (var i = 0; i < indices.length; i++) {
-                    var message = name + ': failed at index:' + i + '(result[' + indices[i] + '])'
+                    var message = name + ': failed at index:' + i + ' (result[' + indices[i] + '])'
                     var actual = repeater.itemAt(i)
                     var expected = results[indices[i]]
                     compare(actual.fileName, expected.fileName, message)
@@ -94,6 +95,14 @@ Item {
             fileModel.sortOrder = Qt.DescendingOrder
             check([0, 1, 2], 'Reverse by size')
 
+            fileModel.includeHiddenFiles = true
+            fileModel.sortBy = FileModel.SortByName
+            check([2, 1, 0, 4], 'Reverse by name with hidden')
+
+            fileModel.sortBy = FileModel.SortBySize
+            check([0, 1, 2, 4], 'Reverse by size with hidden')
+
+            fileModel.includeHiddenFiles = false
             fileModel.directorySort = FileModel.SortDirectoriesBeforeFiles
             fileModel.includeDirectories = true
             check([3, 0, 1, 2], 'Reverse by size after directories')

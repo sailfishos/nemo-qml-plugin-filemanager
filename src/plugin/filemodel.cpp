@@ -93,6 +93,7 @@ FileModel::FileModel(QObject *parent) :
     m_caseSensitivity(Qt::CaseSensitive),
     m_includeDirectories(true),
     m_includeParentDirectory(false),
+    m_includeHiddenFiles(false),
     m_active(false),
     m_dirty(false),
     m_populated(false),
@@ -248,6 +249,15 @@ void FileModel::setIncludeParentDirectory(bool include)
 
     m_includeParentDirectory = include;
     scheduleUpdate(IncludeParentDirectoryChanged | ContentChanged);
+}
+
+void FileModel::setIncludeHiddenFiles(bool include)
+{
+    if (m_includeHiddenFiles == include)
+        return;
+
+    m_includeHiddenFiles = include;
+    scheduleUpdate(IncludeHiddenFilesChanged | ContentChanged);
 }
 
 void FileModel::setDirectorySort(DirectorySort sort)
@@ -516,6 +526,10 @@ QDir FileModel::directory() const
             }
         }
 
+        if (m_includeHiddenFiles) {
+            filters |= QDir::Hidden;
+        }
+
         QDir::SortFlags sortFlags(QDir::LocaleAware);
 
         if (m_sortBy == SortByName) {
@@ -588,6 +602,9 @@ void FileModel::update()
     }
     if (m_changedFlags & IncludeParentDirectoryChanged) {
         emit includeParentDirectoryChanged();
+    }
+    if (m_changedFlags & IncludeHiddenFilesChanged) {
+        emit includeHiddenFilesChanged();
     }
     if (m_changedFlags & DirectorySortChanged) {
         emit directorySortChanged();
