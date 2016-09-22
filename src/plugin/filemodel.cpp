@@ -214,6 +214,7 @@ void FileModel::setPath(QString path)
     m_path = path;
     m_absolutePath = QString();
     m_directory = QString();
+    m_parentPath = QString();
     scheduleUpdate(PathChanged);
 }
 
@@ -463,6 +464,7 @@ void FileModel::readAllEntries()
 
     m_absolutePath = dir.absolutePath();
     m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
+    m_parentPath = dir.isRoot() ? QString() : QDir::cleanPath(dir.absoluteFilePath(QStringLiteral("..")));
     m_files = directoryEntries(dir);
 }
 

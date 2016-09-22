@@ -58,6 +58,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(QString path READ path WRITE setPath NOTIFY pathChanged)
     Q_PROPERTY(QString absolutePath READ absolutePath NOTIFY pathChanged)
     Q_PROPERTY(QString directoryName READ directoryName NOTIFY pathChanged)
+    Q_PROPERTY(QString parentDirectoryName READ parentDirectoryName NOTIFY pathChanged)
     Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
@@ -109,6 +110,7 @@ public:
 
     QString absolutePath() const { return m_absolutePath; }
     QString directoryName() const { return m_directory; }
+    QString parentDirectoryName() const { return m_parentPath; }
 
     Sort sortBy() const { return m_sortBy; }
     void setSortBy(Sort sortBy);
@@ -222,6 +224,7 @@ private:
     QString m_path;
     QString m_absolutePath;
     QString m_directory;
+    QString m_parentPath;
     Sort m_sortBy;
     DirectorySort m_directorySort;
     Qt::SortOrder m_sortOrder;
