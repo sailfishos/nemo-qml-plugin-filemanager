@@ -25,11 +25,20 @@ INSTALLS += qmldir
 
 system(qdbusxml2cpp -c FileOperationsProxy -p fileoperationsproxy.h:fileoperationsproxy.cpp ../../dbus/org.nemomobile.FileOperations.xml)
 
-SOURCES += plugin.cpp filemodel.cpp fileengine.cpp fileoperations.cpp \
-           fileworker.cpp statfileinfo.cpp fileoperationsproxy.cpp
+SOURCES += fileengine.cpp \
+    filemodel.cpp \
+    fileoperations.cpp \
+    fileoperationsproxy.cpp \
+    fileworker.cpp \
+    plugin.cpp \
+    statfileinfo.cpp
 
-HEADERS += filemodel.h fileengine.h fileworker.h fileoperations.h \
-           statfileinfo.h fileoperationsproxy.h
+HEADERS += fileengine.h \
+    filemodel.h \
+    fileoperations.h \
+    fileoperationsproxy.h \
+    fileworker.h \
+    statfileinfo.h
 
 INCLUDEPATH += $$PWD ../shared
 VPATH += ../shared
