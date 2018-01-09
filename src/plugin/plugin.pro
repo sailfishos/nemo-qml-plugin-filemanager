@@ -3,7 +3,7 @@ PLUGIN_IMPORT_PATH = Nemo/FileManager
 
 TEMPLATE = lib
 CONFIG += qt plugin hide_symbols c++11
-QT += qml dbus
+QT += qml dbus concurrent
 
 CONFIG += link_pkgconfig
 
@@ -12,6 +12,8 @@ contains(CONFIG, desktop) {
 } else {
     PKGCONFIG += contactcache-qt5
 }
+
+PKGCONFIG += KF5Archive
 
 # Drop any library linkage we dont actually need (such as contactcache-qt5)
 QMAKE_LFLAGS *= -Wl,--as-needed
@@ -25,7 +27,9 @@ INSTALLS += qmldir
 
 system(qdbusxml2cpp -c FileOperationsProxy -p fileoperationsproxy.h:fileoperationsproxy.cpp ../../dbus/org.nemomobile.FileOperations.xml)
 
-SOURCES += fileengine.cpp \
+SOURCES += archiveinfo.cpp \
+    archivemodel.cpp \
+    fileengine.cpp \
     filemodel.cpp \
     fileoperations.cpp \
     fileoperationsproxy.cpp \
@@ -33,7 +37,10 @@ SOURCES += fileengine.cpp \
     plugin.cpp \
     statfileinfo.cpp
 
-HEADERS += fileengine.h \
+HEADERS += archiveinfo.h \
+    archivemodel_p.h \
+    archivemodel.h \
+    fileengine.h \
     filemodel.h \
     fileoperations.h \
     fileoperationsproxy.h \

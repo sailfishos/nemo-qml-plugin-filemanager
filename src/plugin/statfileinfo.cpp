@@ -103,6 +103,8 @@ void StatFileInfo::refresh()
     if (m_fileName.isEmpty())
         return;
 
+    m_archiveInfo.setFile(m_fileName);
+
     QByteArray ba = m_fileName.toUtf8();
     char *fn = ba.data();
 

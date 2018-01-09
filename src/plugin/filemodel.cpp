@@ -49,6 +49,7 @@ enum {
     LastModifiedRole,
     CreatedRole,
     IsDirRole,
+    IsArchiveRole,
     IsLinkRole,
     SymLinkTargetRole,
     IsSelectedRole,
@@ -144,6 +145,9 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     case IsDirRole:
         return info.isDirAtEnd();
 
+    case IsArchiveRole:
+        return info.isArchive();
+
     case IsLinkRole:
         return info.isSymLink();
 
@@ -179,6 +183,7 @@ QHash<int, QByteArray> FileModel::roleNames() const
     roles.insert(LastModifiedRole, QByteArray("modified"));
     roles.insert(CreatedRole, QByteArray("created"));
     roles.insert(IsDirRole, QByteArray("isDir"));
+    roles.insert(IsArchiveRole, QByteArray("isArchive"));
     roles.insert(IsLinkRole, QByteArray("isLink"));
     roles.insert(SymLinkTargetRole, QByteArray("symLinkTarget"));
     roles.insert(IsSelectedRole, QByteArray("isSelected"));
