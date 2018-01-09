@@ -44,18 +44,18 @@ namespace {
 
 enum {
     FileNameRole = Qt::UserRole + 1,
-    MimeTypeRole = Qt::UserRole + 2,
-    SizeRole = Qt::UserRole + 3,
-    LastModifiedRole = Qt::UserRole + 4,
-    CreatedRole = Qt::UserRole + 5,
-    IsDirRole = Qt::UserRole + 6,
-    IsLinkRole = Qt::UserRole + 7,
-    SymLinkTargetRole = Qt::UserRole + 8,
-    IsSelectedRole = Qt::UserRole + 9,
-    ExtensionRole = Qt::UserRole + 10,
-    AbsolutePathRole = Qt::UserRole + 11,
-    LastAccessedRole = Qt::UserRole + 12,
-    BaseNameRole = Qt::UserRole + 13
+    MimeTypeRole,
+    SizeRole,
+    LastModifiedRole,
+    CreatedRole,
+    IsDirRole,
+    IsLinkRole,
+    SymLinkTargetRole,
+    IsSelectedRole,
+    ExtensionRole,
+    AbsolutePathRole,
+    LastAccessedRole,
+    BaseNameRole
 };
 
 int access(QString fileName, int how)
