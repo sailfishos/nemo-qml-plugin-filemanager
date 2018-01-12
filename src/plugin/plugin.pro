@@ -6,7 +6,12 @@ CONFIG += qt plugin hide_symbols c++11
 QT += qml dbus
 
 CONFIG += link_pkgconfig
-PKGCONFIG += contactcache-qt5
+
+contains(CONFIG, desktop) {
+    DEFINES *= DESKTOP
+} else {
+    PKGCONFIG += contactcache-qt5
+}
 
 # Drop any library linkage we dont actually need (such as contactcache-qt5)
 QMAKE_LFLAGS *= -Wl,--as-needed

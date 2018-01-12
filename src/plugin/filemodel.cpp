@@ -492,7 +492,11 @@ void FileModel::refreshEntries()
 
         // read all files
         QVector<StatFileInfo> newFiles = directoryEntries(dir);
+#ifdef DESKTOP
+        m_files = newFiles;
+#else
         ::synchronizeList(this, m_files, newFiles);
+#endif
     }
 
     recountSelectedFiles();
