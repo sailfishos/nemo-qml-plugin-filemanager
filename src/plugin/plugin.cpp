@@ -36,6 +36,7 @@
 #include <QQmlEngine>
 #include <QQmlExtensionPlugin>
 
+#include "archivemodel.h"
 #include "fileengine.h"
 #include "filemodel.h"
 
@@ -61,6 +62,7 @@ public:
     {
         Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
         qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
+        qmlRegisterType<Sailfish::ArchiveModel>("Nemo.FileManager", 1, 0, "ArchiveModel");
         qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
 
         qRegisterMetaType<FileEngine::Error>("FileEngine::Error");

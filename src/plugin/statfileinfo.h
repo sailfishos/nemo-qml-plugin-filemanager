@@ -38,6 +38,8 @@
 #include <QDir>
 #include <sys/stat.h>
 
+#include "archiveinfo.h"
+
 /**
  * @brief The StatFileInfo class is like QFileInfo, but has more detailed information about file types.
  */
@@ -75,6 +77,10 @@ public:
 
     // directory
     bool isDirAtEnd() const { return S_ISDIR(m_stat.st_mode); }
+
+    // archive
+    bool isArchive() const  { return m_archiveInfo.supported(); }
+
     // block special file
     bool isBlkAtEnd() const { return S_ISBLK(m_stat.st_mode); }
     // character special file
@@ -122,6 +128,7 @@ public:
 private:
     QString m_fileName;
     QFileInfo m_fileInfo;
+    Sailfish::ArchiveInfo m_archiveInfo;
     struct stat m_stat; // after following possible symlinks
     struct stat m_lstat; // file itself without following symlinks
     bool m_selected;
