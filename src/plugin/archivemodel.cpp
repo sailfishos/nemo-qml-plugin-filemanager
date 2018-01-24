@@ -71,6 +71,8 @@ enum {
     CreatedRole,
     IsDirRole,
     IsLinkRole,
+    ExtractedRole,
+    ExtractedTargetPathRole,
     SymLinkTargetRole,
     IsSelectedRole,
     ExtensionRole,
@@ -239,7 +241,7 @@ void ArchiveModelPrivate::scheduleExtract(const QString &entryName, const QStrin
     connect(extractionWatcher, &QFutureWatcher<FileExtractionResult>::finished, this, [this, mode]() {
         FileExtractionResult result = extractionWatcher->result();
         ArchiveModel::ErrorState state = result.first;
-        QString entry = result.second;
+        ExtractionInfo extractionInfo = result.second;
 
         if (state == ArchiveModel::NoError) {
             setStatus(ArchiveModel::Ready, state);
@@ -251,33 +253,49 @@ void ArchiveModelPrivate::scheduleExtract(const QString &entryName, const QStrin
         emit q->extractingChanged();
 
         if (state == ArchiveModel::NoError) {
-            QFileInfo entryInfo(entry);
+            QString absolutePath = extractionInfo.absolutePath;
+            QFileInfo entryInfo(absolutePath);
             bool isDir = entryInfo.isDir();
-            QStringList entries;
+            QStringList extractedFiles;
             if (mode == ExtractionMode::SingleFile && !isDir) {
-                entries << entry;
+                extractedFiles << absolutePath;
             } else {
-                QDir d(entry, QString(), QDir::Name | QDir::DirsFirst, QDir::NoDotAndDotDot | QDir::AllEntries);
+                QDir d(absolutePath, QString(), QDir::Name | QDir::DirsFirst, QDir::NoDotAndDotDot | QDir::AllEntries);
                 QDirIterator dirIterator(d, QDirIterator::Subdirectories);
                 while (dirIterator.hasNext()) {
                     QString f = dirIterator.next();
-                    entries << f;
+                    extractedFiles << f;
                 }
             }
 
-            QDir entryDir(entry);
+            QDir entryDir(absolutePath);
             QString name;
-            if (entries.count() == 1) {
-                entryInfo.setFile(entries.at(0));
+            if (extractedFiles.count() == 1) {
+                entryInfo.setFile(extractedFiles.at(0));
                 name = entryInfo.fileName();
             } else {
                 name = entryDir.dirName();
             }
 
+            if (mode == ExtractionMode::SingleFile) {
+                int i = findIndex(extractionInfo.entry);
+                if (i >= 0) {
+                    if (!extractedEntries.contains(extractionInfo.entry)) {
+                        extractedEntries.insert(extractionInfo.entry, extractionInfo);
+                        QModelIndex index = q->index(i, 0);
+                        emit q->dataChanged(index, index, QVector<int>() << ExtractedRole << ExtractedTargetPathRole);
+                    } else {
+                        qCWarning(lcArchiveLog) << extractionInfo.entry << "is already extracted.";
+                    }
+                } else {
+                    qCWarning(lcArchiveLog) << extractionInfo.entry << "is not part of this archive directory. Source of bug!";
+                }
+            }
+
             // When extracting an archive entryInfo is a directory. Thus, checking that we're extracting a single file
             // from an archive that is a directory.
             emit q->filesExtracted(entryDir.absolutePath(), (mode == ExtractionMode::SingleFile && entryInfo.isDir()),
-                                   name, entries);
+                                   name, extractedFiles);
         }
         extractionWatcher->deleteLater();
         extractionWatcher = nullptr;
@@ -298,6 +316,15 @@ void ArchiveModelPrivate::scheduleExtract(const QString &entryName, const QStrin
     } else {
         extractionWatcher->setFuture(QtConcurrent::run(this, &ArchiveModelPrivate::doExtractAllFiles, path));
     }
+}
+
+int ArchiveModelPrivate::findIndex(const QString &entryName)
+{
+    for (int i = 0; i < entryList.count(); ++i) {
+        if (entryList.at(i)->name() == entryName)
+            return i;
+    }
+    return -1;
 }
 
 FileExtractionResult ArchiveModelPrivate::doExtractFile(const QString &entryName, const QString &targetPath)
@@ -329,7 +356,7 @@ FileExtractionResult ArchiveModelPrivate::doExtractFile(const QString &entryName
 
     if (extracted) {
         result.first = ArchiveModel::NoError;
-        result.second = out;
+        result.second = ExtractionInfo(entryName, out);
     } else {
         result.first = ArchiveModel::ErrorArchiveExtractFailed;
     }
@@ -352,7 +379,7 @@ FileExtractionResult ArchiveModelPrivate::doExtractAllFiles(const QString &targe
     QString out;
     if (dir->copyTo(targetPath, true, true, &out)) {
         result.first = ArchiveModel::NoError;
-        result.second = out;
+        result.second = ExtractionInfo("", out);
         qCDebug(lcArchiveLog) << "Extracted archive to:" << out;
     } else {
         result.first = ArchiveModel::ErrorArchiveExtractFailed;
@@ -420,6 +447,16 @@ QVariant ArchiveModel::data(const QModelIndex &index, int role) const
         }
         return 0;
 
+    case ExtractedRole:
+        return d->extractedEntries.contains(entry->name());
+
+    case ExtractedTargetPathRole:
+        if (d->extractedEntries.contains(entry->name())) {
+            const ExtractionInfo &extrationInfo = d->extractedEntries.value(entry->name());
+            return extrationInfo.absolutePath;
+        }
+        return QString();
+
     case CreatedRole:
         return entry->date();
 
@@ -461,6 +498,8 @@ QHash<int, QByteArray> ArchiveModel::roleNames() const
     roles.insert(MimeTypeRole, QByteArray("mimeType"));
     roles.insert(SizeRole, QByteArray("size"));
     roles.insert(CreatedRole, QByteArray("created"));
+    roles.insert(ExtractedRole, QByteArray("extracted"));
+    roles.insert(ExtractedTargetPathRole, QByteArray("extractedTargetPath"));
     roles.insert(IsDirRole, QByteArray("isDir"));
     roles.insert(IsLinkRole, QByteArray("isLink"));
     roles.insert(SymLinkTargetRole, QByteArray("symLinkTarget"));
@@ -677,6 +716,26 @@ bool ArchiveModel::extractFile(const QString &entryName, const QString &targetPa
     }
 
     d->scheduleExtract(entryName, targetPath, ExtractionMode::SingleFile);
+    return true;
+}
+
+bool ArchiveModel::cleanExtractedEntry(const QString &entry)
+{
+    if (d->extracting) {
+        qmlInfo(this) << "Extracting, wait for extraction to complete.";
+        d->setStatus(Extracting, ErrorExtractingInProgress);
+        return false;
+    }
+
+    int entryIndex = d->findIndex(entry);
+    if (d->extractedEntries.contains(entry) && entryIndex >= 0) {
+        d->extractedEntries.remove(entry);
+        QModelIndex index = this->index(entryIndex, 0);
+        emit dataChanged(index, index, QVector<int>() << ExtractedRole << ExtractedTargetPathRole);
+    } else {
+        qmlInfo(this) << "Entry:" << entry << "is not extracted.";
+    }
+
     return true;
 }
 
