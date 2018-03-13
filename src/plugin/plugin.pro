@@ -13,6 +13,8 @@ contains(CONFIG, desktop) {
     PKGCONFIG += contactcache-qt5
 }
 
+QMAKE_CXXFLAGS += -Wparentheses -Werror -Wfatal-errors
+
 PKGCONFIG += KF5Archive
 
 # Drop any library linkage we dont actually need (such as contactcache-qt5)

@@ -50,7 +50,21 @@ enum ExtractionMode {
     // There could be selected files
 };
 
-typedef QPair<ArchiveModel::ErrorState, QString> FileExtractionResult;
+struct ExtractionInfo
+{
+    ExtractionInfo() {}
+
+    ExtractionInfo(QString entry, QString absolutePath)
+        : entry(entry)
+        , absolutePath(absolutePath)
+    {
+    }
+
+    QString entry;
+    QString absolutePath;
+};
+
+typedef QPair<ArchiveModel::ErrorState, ExtractionInfo> FileExtractionResult;
 
 class ArchiveModelPrivate : public QObject
 {
@@ -67,9 +81,12 @@ public:
 
     void scheduleExtract(const QString &entryName, const QString &targetPath, ExtractionMode mode);
 
+    int findIndex(const QString &entryName);
+
     ArchiveModel *q;
     ArchiveModel::Status status;
     ArchiveModel::ErrorState errorState;
+    QMap<QString, ExtractionInfo> extractedEntries;
     qint64 requiredSpace;
     QString path;
     QString errorString;

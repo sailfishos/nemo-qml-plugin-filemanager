@@ -5,6 +5,7 @@ QT += dbus
 CONFIG += c++11
 
 CONFIG += link_pkgconfig link_prl
+QMAKE_CXXFLAGS += -Wparentheses -Werror -Wfatal-errors
 
 packagesExist(qt5-boostable) {
     DEFINES += HAS_BOOSTER

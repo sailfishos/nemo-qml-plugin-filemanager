@@ -116,6 +116,9 @@ public:
     Q_INVOKABLE bool extractAllFiles(const QString &targetPath);
     Q_INVOKABLE bool extractFile(const QString &entryName, const QString &targetPath);
 
+    // If component user deletes the file from outside, clean state for the extracted.
+    Q_INVOKABLE bool cleanExtractedEntry(const QString &entry);
+
 signals:
     void pathChanged();
     void statusChanged();
