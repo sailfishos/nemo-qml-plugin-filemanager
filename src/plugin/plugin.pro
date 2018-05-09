@@ -23,9 +23,12 @@ QMAKE_LFLAGS *= -Wl,--as-needed
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
 
-qmldir.files += qmldir
+qmldir.files += qmldir plugins.qmltypes
 qmldir.path +=  $$target.path
 INSTALLS += qmldir
+
+qmltypes.commands = qmlplugindump -nonrelocatable Nemo.FileManager 1.0 > $$PWD/plugins.qmltypes
+QMAKE_EXTRA_TARGETS += qmltypes
 
 system(qdbusxml2cpp -c FileOperationsProxy -p fileoperationsproxy.h:fileoperationsproxy.cpp ../../dbus/org.nemomobile.FileOperations.xml)
 
