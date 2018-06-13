@@ -63,7 +63,7 @@ public:
     {
         Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
         qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
-        qmlRegisterType<Sailfish::ArchiveModel>("Nemo.FileManager", 1, 0, "ArchiveModel");
+        qmlRegisterType<Sailfish::ArchiveModel>(uri, 1, 0, "ArchiveModel");
         qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");
         qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
 
