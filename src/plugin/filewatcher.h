@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Jolla Ltd.
+ * Copyright (C) 2018 Jolla Ltd.
  * Contact: Joona Petrell <joona.petrell@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -30,45 +30,43 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include <QtGlobal>
+#ifndef FILEWATCHER_H
+#define FILEWATCHER_H
 
-#include <QtQml>
-#include <QQmlEngine>
-#include <QQmlExtensionPlugin>
+#include <QObject>
+#include <QString>
 
-#include "archivemodel.h"
-#include "fileengine.h"
-#include "filemodel.h"
-#include "filewatcher.h"
+class QFileSystemWatcher;
+class QFile;
 
-static QObject *engine_api_factory(QQmlEngine *, QJSEngine *)
-{
-    return new FileEngine;
-}
-
-class Q_DECL_EXPORT NemoFileManagerPlugin : public QQmlExtensionPlugin
+class FileWatcher : public QObject
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.nemomobile.FileManager")
+    Q_PROPERTY(QString fileName READ fileName WRITE setFileName NOTIFY fileNameChanged)
+    Q_PROPERTY(bool exists READ exists NOTIFY existsChanged)
 
 public:
-    virtual ~NemoFileManagerPlugin() { }
+    explicit FileWatcher(QObject *parent = 0);
+    ~FileWatcher();
 
-    void initializeEngine(QQmlEngine *, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-    }
+    bool exists() const;
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-        qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
-        qmlRegisterType<Sailfish::ArchiveModel>("Nemo.FileManager", 1, 0, "ArchiveModel");
-        qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");
-        qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
+    QString fileName() const;
+    void setFileName(const QString &fileName);
 
-        qRegisterMetaType<FileEngine::Error>("FileEngine::Error");
-    }
+    Q_INVOKABLE bool testFileExists(const QString &fileName) const;
+
+signals:
+    void existsChanged();
+    void fileNameChanged();
+
+protected slots:
+    void testFileExists();
+
+private:
+    bool m_exists;
+    QFile *m_file;
+    QFileSystemWatcher *m_watcher;
 };
 
-#include "plugin.moc"
+#endif // FILEWATCHER_H

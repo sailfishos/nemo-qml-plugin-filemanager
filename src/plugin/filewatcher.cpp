@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Jolla Ltd.
+ * Copyright (C) 2018 Jolla Ltd.
  * Contact: Joona Petrell <joona.petrell@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -30,45 +30,64 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include <QtGlobal>
-
-#include <QtQml>
-#include <QQmlEngine>
-#include <QQmlExtensionPlugin>
-
-#include "archivemodel.h"
-#include "fileengine.h"
-#include "filemodel.h"
 #include "filewatcher.h"
+#include <QFile>
+#include <QFileInfo>
+#include <QFileSystemWatcher>
+#include <QQmlInfo>
 
-static QObject *engine_api_factory(QQmlEngine *, QJSEngine *)
+FileWatcher::FileWatcher(QObject *parent)
+    : QObject(parent)
+    , m_exists(false)
+    , m_file(new QFile(this))
+    , m_watcher(new QFileSystemWatcher(this))
 {
-    return new FileEngine;
+    connect(m_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(testFileExists()));
 }
 
-class Q_DECL_EXPORT NemoFileManagerPlugin : public QQmlExtensionPlugin
+FileWatcher::~FileWatcher()
 {
-    Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.nemomobile.FileManager")
+}
 
-public:
-    virtual ~NemoFileManagerPlugin() { }
-
-    void initializeEngine(QQmlEngine *, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
+void FileWatcher::testFileExists()
+{
+    bool exists = m_file->exists();
+    if (m_exists != exists) {
+        m_exists = exists;
+        emit existsChanged();
     }
+}
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-        qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
-        qmlRegisterType<Sailfish::ArchiveModel>("Nemo.FileManager", 1, 0, "ArchiveModel");
-        qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");
-        qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
+bool FileWatcher::exists() const
+{
+    return m_exists;
+}
 
-        qRegisterMetaType<FileEngine::Error>("FileEngine::Error");
+QString FileWatcher::fileName() const
+{
+    return m_file->fileName();
+}
+
+void FileWatcher::setFileName(const QString &fileName)
+{
+    if (m_file->fileName() != fileName) {
+        if (!m_file->fileName().isEmpty()) {
+            m_watcher->removePath(m_file->fileName());
+        }
+        m_file->setFileName(fileName);
+        if (!fileName.isEmpty()) {
+            QFileInfo fileInfo(fileName);
+            QString absolutePath = fileInfo.absolutePath();
+            if (!m_watcher->addPath(absolutePath)) {
+                qmlInfo(this) << "FileWatcher: watching folder " << absolutePath << " failed";
+            }
+        }
+        testFileExists();
+        emit fileNameChanged();
     }
-};
+}
 
-#include "plugin.moc"
+bool FileWatcher::testFileExists(const QString &fileName) const
+{
+    return QFile::exists(fileName);
+}
