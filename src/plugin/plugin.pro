@@ -35,6 +35,7 @@ SOURCES += archiveinfo.cpp \
     filemodel.cpp \
     fileoperations.cpp \
     fileoperationsproxy.cpp \
+    filewatcher.cpp \
     fileworker.cpp \
     plugin.cpp \
     statfileinfo.cpp
@@ -46,6 +47,7 @@ HEADERS += archiveinfo.h \
     filemodel.h \
     fileoperations.h \
     fileoperationsproxy.h \
+    filewatcher.h \
     fileworker.h \
     statfileinfo.h
 
