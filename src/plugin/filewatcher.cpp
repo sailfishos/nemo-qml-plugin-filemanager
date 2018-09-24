@@ -39,10 +39,8 @@
 FileWatcher::FileWatcher(QObject *parent)
     : QObject(parent)
     , m_exists(false)
-    , m_file(new QFile(this))
-    , m_watcher(new QFileSystemWatcher(this))
+    , m_watcher(nullptr)
 {
-    connect(m_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(testFileExists()));
 }
 
 FileWatcher::~FileWatcher()
@@ -51,7 +49,7 @@ FileWatcher::~FileWatcher()
 
 void FileWatcher::testFileExists()
 {
-    bool exists = m_file->exists();
+    bool exists = m_file.exists();
     if (m_exists != exists) {
         m_exists = exists;
         emit existsChanged();
@@ -65,22 +63,21 @@ bool FileWatcher::exists() const
 
 QString FileWatcher::fileName() const
 {
-    return m_file->fileName();
+    return m_file.fileName();
 }
 
 void FileWatcher::setFileName(const QString &fileName)
 {
-    if (m_file->fileName() != fileName) {
-        if (!m_file->fileName().isEmpty()) {
-            m_watcher->removePath(m_file->fileName());
-        }
-        m_file->setFileName(fileName);
+    if (m_file.fileName() != fileName) {
+        delete m_watcher;
+        m_watcher = nullptr;
+        m_file.setFileName(fileName);
         if (!fileName.isEmpty()) {
             QFileInfo fileInfo(fileName);
             QString absolutePath = fileInfo.absolutePath();
-            if (!m_watcher->addPath(absolutePath)) {
-                qmlInfo(this) << "FileWatcher: watching folder " << absolutePath << " failed";
-            }
+            m_watcher = new QFileSystemWatcher(this);
+            m_watcher->addPath(absolutePath);
+            connect(m_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(testFileExists()));
         }
         testFileExists();
         emit fileNameChanged();
