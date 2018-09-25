@@ -35,9 +35,9 @@
 
 #include <QObject>
 #include <QString>
+#include <QFile>
 
 class QFileSystemWatcher;
-class QFile;
 
 class FileWatcher : public QObject
 {
@@ -65,7 +65,7 @@ protected slots:
 
 private:
     bool m_exists;
-    QFile *m_file;
+    QFile m_file;
     QFileSystemWatcher *m_watcher;
 };
 
