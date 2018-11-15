@@ -217,6 +217,19 @@ Module {
         Method { name: "selectedFiles"; type: "QStringList" }
     }
     Component {
+        name: "FileWatcher"
+        prototype: "QObject"
+        exports: ["Nemo.FileManager/FileWatcher 1.0"]
+        exportMetaObjectRevisions: [0]
+        Property { name: "fileName"; type: "string" }
+        Property { name: "exists"; type: "bool"; isReadonly: true }
+        Method {
+            name: "testFileExists"
+            type: "bool"
+            Parameter { name: "fileName"; type: "string" }
+        }
+    }
+    Component {
         name: "QAbstractItemModel"
         prototype: "QObject"
         Enum {
