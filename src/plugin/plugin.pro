@@ -3,7 +3,11 @@ PLUGIN_IMPORT_PATH = Nemo/FileManager
 
 TEMPLATE = lib
 CONFIG += qt plugin hide_symbols c++11
-QT += qml dbus concurrent
+QT = \
+    core \
+    concurrent \
+    dbus \
+    qml
 
 CONFIG += link_pkgconfig
 
