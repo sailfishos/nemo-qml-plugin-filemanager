@@ -34,9 +34,9 @@
 
 #include <QDateTime>
 #include <QDebug>
-#include <QGuiApplication>
 #include <QMimeType>
 #include <QQmlInfo>
+#include <QTimerEvent>
 
 #include <unistd.h>
 

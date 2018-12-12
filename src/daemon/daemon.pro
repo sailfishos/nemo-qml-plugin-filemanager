@@ -1,7 +1,9 @@
 TEMPLATE = app
 TARGET = fileoperationsd
 
-QT += dbus
+QT = \
+    core \
+    dbus
 CONFIG += c++11
 
 CONFIG += link_pkgconfig link_prl
