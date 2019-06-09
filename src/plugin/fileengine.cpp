@@ -170,6 +170,16 @@ bool FileEngine::exists(QString fileName)
     return QFile::exists(fileName);
 }
 
+bool FileEngine::dirExists(const QString &path)
+{
+    if (path.isEmpty()) {
+        return false;
+    }
+
+    QDir dir(path);
+    return dir.exists();
+}
+
 bool FileEngine::mkdir(QString path, QString name, bool nonprivileged)
 {
     if (!m_fileWorker->mkdir(path, name, nonprivileged)) {

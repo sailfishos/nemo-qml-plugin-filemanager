@@ -96,6 +96,7 @@ public:
 
     // synchronous methods
     Q_INVOKABLE bool exists(QString fileName);
+    Q_INVOKABLE bool dirExists(const QString &path);
     Q_INVOKABLE bool mkdir(QString path, QString name, bool nonprivileged = false);
     Q_INVOKABLE bool rename(QString fullOldFileName, QString newName, bool nonprivileged = false);
     Q_INVOKABLE bool chmod(QString path,
