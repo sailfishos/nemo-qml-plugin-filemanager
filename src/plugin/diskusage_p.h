@@ -46,20 +46,25 @@ public:
     virtual ~DiskUsageWorker();
 
     void scheduleQuit() { m_quit = true; }
+    void sheduleStopCounting() { m_stopCounting = true; }
 
 public slots:
     void submit(QStringList paths, QJSValue *callback);
+    void startCounting(const QString &path, QJSValue *callback, bool recursive);
 
 signals:
     void finished(QVariantMap usage, QJSValue *callback);
+    void countingFinished(const int &counter, QJSValue *callback);
 
 private:
     QVariantMap calculate(QStringList paths);
     quint64 calculateSize(QString directory, QString *expandedPath, bool androidHomeExists);
     quint64 calculateRpmSize(const QString &glob);
     quint64 calculateApkdSize(const QString &rest);
+    int counting(const QString &path, bool recursive);
 
     bool m_quit;
+    bool m_stopCounting;
 
     friend class Ut_DiskUsage;
 };
