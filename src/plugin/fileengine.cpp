@@ -129,7 +129,7 @@ void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
 
         // source and dest fileNames are the same?
         if (fileName == newName) {
-            qmlInfo(this) << "Paste can't overwrite itself";
+            emit error(ErrorCannotCopyIntoItself, fileName);
             return;
         }
 
