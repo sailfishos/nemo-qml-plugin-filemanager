@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Jolla Ltd.
- * Contact: Joona Petrell <joona.petrell@jollamobile.com>
+ * Copyright (C) 2015 Jolla Ltd.
+ * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -13,7 +13,7 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of Jolla Ltd. nor the names of its contributors
+ *   * Neither the name of Nemo Mobile nor the names of its contributors
  *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
@@ -30,47 +30,23 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include <QtGlobal>
+#ifndef UT_DISKUSAGE_H
+#define UT_DISKUSAGE_H
 
-#include <QtQml>
-#include <QQmlEngine>
-#include <QQmlExtensionPlugin>
+#include <QObject>
 
-#include "archivemodel.h"
-#include "fileengine.h"
-#include "filemodel.h"
-#include "filewatcher.h"
-#include "diskusage.h"
-
-static QObject *engine_api_factory(QQmlEngine *, QJSEngine *)
-{
-    return new FileEngine;
-}
-
-class Q_DECL_EXPORT NemoFileManagerPlugin : public QQmlExtensionPlugin
-{
+class Ut_DiskUsage : public QObject {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.nemomobile.FileManager")
 
-public:
-    virtual ~NemoFileManagerPlugin() { }
+private slots:
+    void cleanup();
 
-    void initializeEngine(QQmlEngine *, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-    }
-
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-        qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
-        qmlRegisterType<Sailfish::ArchiveModel>(uri, 1, 0, "ArchiveModel");
-        qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");
-        qmlRegisterType<DiskUsage>(uri, 1, 0, "DiskUsage");
-        qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
-
-        qRegisterMetaType<FileEngine::Error>("FileEngine::Error");
-    }
+    void testSimple();
+    void testSubtractApkdFromRoot();
+    void testSubtractRPMFromRoot();
+    void testSubtractSubdirectory();
+    void testSubtractNestedSubdirectory();
+    void testSubtractNestedSubdirectoryMulti();
 };
 
-#include "plugin.moc"
+#endif /* UT_DISKUSAGE_H */

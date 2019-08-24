@@ -18,6 +18,14 @@ BuildRequires:  pkgconfig(KF5Archive)
 %description
 %{summary}.
 
+%package devel
+Summary:    Filemanager C++ library
+Group:      System/Libraries
+Requires:   %{name} = %{version}-%{release}
+
+%description devel
+%{summary}.
+
 %package tests
 Summary:    File manager plugin tests
 Group:      System/Libraries
@@ -26,13 +34,18 @@ Requires:   %{name} = %{version}-%{release}
 %description tests
 %{summary}.
 
+%package unit-tests
+Summary:    File manager C++ library (unit tests)
+Group:      System/Libraries
+
+%description unit-tests
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
 %build
-
-%qmake5
-
+%qmake5 "VERSION=%{version}"
 make %{?_smp_mflags}
 
 %install
@@ -46,10 +59,23 @@ chmod o-r -R %{buildroot}/opt/tests/nemo-qml-plugins/filemanager/auto/hiddenfold
 %{_libdir}/qt5/qml/Nemo/FileManager/libnemofilemanager.so
 %{_libdir}/qt5/qml/Nemo/FileManager/plugins.qmltypes
 %{_libdir}/qt5/qml/Nemo/FileManager/qmldir
+%{_libdir}/libfilemanager.so.*
 %{_bindir}/fileoperationsd
 %{_datadir}/dbus-1/services/org.nemomobile.FileOperations.service
 %{_datadir}/dbus-1/interfaces/org.nemomobile.FileOperations.xml
 
+%files devel
+%defattr(-,root,root,-)
+%{_libdir}/pkgconfig/filemanager.pc
+%{_includedir}/filemanager/*
+%{_libdir}/libfilemanager.so
+
 %files tests
 %defattr(-,root,root,-)
 /opt/tests/nemo-qml-plugins/filemanager/
+
+%files unit-tests
+%defattr(-,root,root,-)
+%{_libdir}/%{name}-tests/ut_diskusage
+%{_datadir}/%{name}-tests/tests.xml
+

@@ -56,9 +56,12 @@ HEADERS += archiveinfo.h \
     fileoperationsproxy.h \
     filewatcher.h \
     fileworker.h \
-    statfileinfo.h
+    statfileinfo.h \
+    filemanagerglobal.h
 
 INCLUDEPATH += $$PWD ../shared
 VPATH += ../shared
 
 OTHER_FILES += ../../example/*/*.qml
+
+LIBS += -L.. -lfilemanager
