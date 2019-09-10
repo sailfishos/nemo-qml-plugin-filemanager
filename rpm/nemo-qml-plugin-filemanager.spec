@@ -6,6 +6,8 @@ Group:      System/Libraries
 License:    BSD
 URL:        https://git.merproject.org/mer-core/nemo-qml-plugin-filemanager
 Source0:    %{name}-%{version}.tar.bz2
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Qml)
@@ -46,6 +48,10 @@ rm -rf %{buildroot}
 %qmake5_install
 chmod o+w -R %{buildroot}/%{_libdir}/%{name}-tests/auto/folder
 chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
 
 %files
 %defattr(-,root,root,-)
