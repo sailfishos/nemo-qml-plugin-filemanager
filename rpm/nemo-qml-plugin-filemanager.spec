@@ -55,9 +55,7 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 
 %files
 %defattr(-,root,root,-)
-%{_libdir}/qt5/qml/Nemo/FileManager/libnemofilemanager.so
-%{_libdir}/qt5/qml/Nemo/FileManager/plugins.qmltypes
-%{_libdir}/qt5/qml/Nemo/FileManager/qmldir
+%{_libdir}/qt5/qml/Nemo/FileManager
 %{_libdir}/libfilemanager.so.*
 %{_bindir}/fileoperationsd
 %{_datadir}/dbus-1/services/org.nemomobile.FileOperations.service
@@ -66,7 +64,7 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 %files devel
 %defattr(-,root,root,-)
 %{_libdir}/pkgconfig/filemanager.pc
-%{_includedir}/filemanager/*
+%{_includedir}/filemanager
 %{_libdir}/libfilemanager.so
 
 %files tests
