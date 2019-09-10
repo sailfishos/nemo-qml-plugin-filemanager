@@ -2,7 +2,7 @@
 
 PACKAGENAME = nemo-qml-plugin-filemanager
 
-QT += testlib qml dbus systeminfo
+QT += testlib qml dbus
 QT -= gui
 
 system(sed -e s/@PACKAGENAME@/$${PACKAGENAME}/g tests.xml.template > tests.xml)

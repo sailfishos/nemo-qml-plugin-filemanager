@@ -2,11 +2,7 @@ TEMPLATE = lib
 TARGET = filemanager
 
 CONFIG += qt create_pc create_prl no_install_prl c++11
-QT += qml dbus systeminfo
-QT -= gui
-
-CONFIG += link_pkgconfig
-PKGCONFIG += mlite5
+QT = qml core dbus
 
 SOURCES += \
     plugin/diskusage.cpp \
