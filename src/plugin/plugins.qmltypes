@@ -9,6 +9,24 @@ import QtQuick.tooling 1.2
 Module {
     dependencies: ["QtQuick 2.0"]
     Component {
+        name: "DiskUsage"
+        prototype: "QObject"
+        exports: ["Nemo.FileManager/DiskUsage 1.0"]
+        exportMetaObjectRevisions: [0]
+        Property { name: "working"; type: "bool"; isReadonly: true }
+        Property { name: "result"; type: "QVariantMap"; isReadonly: true }
+        Signal {
+            name: "submit"
+            Parameter { name: "paths"; type: "QStringList" }
+            Parameter { name: "callback"; type: "QJSValue"; isPointer: true }
+        }
+        Method {
+            name: "calculate"
+            Parameter { name: "paths"; type: "QStringList" }
+            Parameter { name: "callback"; type: "QJSValue" }
+        }
+    }
+    Component {
         name: "FileEngine"
         prototype: "QObject"
         exports: ["Nemo.FileManager/FileEngine 1.0"]

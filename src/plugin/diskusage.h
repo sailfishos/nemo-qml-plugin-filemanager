@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2016 Jolla Ltd.
- * Contact: Joona Petrell <joona.petrell@jollamobile.com>
+ * Copyright (C) 2015 Jolla Ltd.
+ * Contact: Thomas Perl <thomas.perl@jolla.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -13,7 +13,7 @@
  *     notice, this list of conditions and the following disclaimer in
  *     the documentation and/or other materials provided with the
  *     distribution.
- *   * Neither the name of Jolla Ltd. nor the names of its contributors
+ *   * Neither the name of Nemo Mobile nor the names of its contributors
  *     may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
@@ -30,47 +30,62 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  */
 
-#include <QtGlobal>
+#ifndef DISKUSAGE_H
+#define DISKUSAGE_H
 
-#include <QtQml>
-#include <QQmlEngine>
-#include <QQmlExtensionPlugin>
+#include <QObject>
+#include <QVariant>
+#include <QJSValue>
+#include <QScopedPointer>
 
-#include "archivemodel.h"
-#include "fileengine.h"
-#include "filemodel.h"
-#include "filewatcher.h"
-#include "diskusage.h"
+#include <filemanagerglobal.h>
 
-static QObject *engine_api_factory(QQmlEngine *, QJSEngine *)
-{
-    return new FileEngine;
-}
+class DiskUsagePrivate;
 
-class Q_DECL_EXPORT NemoFileManagerPlugin : public QQmlExtensionPlugin
+class FILEMANAGER_EXPORT DiskUsage: public QObject
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.nemomobile.FileManager")
+    Q_DECLARE_PRIVATE(DiskUsage)
+
+    // True while calculation takes place
+    Q_PROPERTY(bool working READ working NOTIFY workingChanged)
+
+    Q_PROPERTY(QVariantMap result READ result NOTIFY resultChanged)
 
 public:
-    virtual ~NemoFileManagerPlugin() { }
+    explicit DiskUsage(QObject *parent=nullptr);
+    virtual ~DiskUsage();
 
-    void initializeEngine(QQmlEngine *, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
+    // Calculate the disk usage of the given paths, then call
+    // callback with a QVariantMap (mapping paths to usages in bytes)
+    Q_INVOKABLE void calculate(const QStringList &paths, QJSValue callback);
+
+    QVariantMap result() const;
+
+signals:
+    void workingChanged();
+    void resultChanged();
+
+signals:
+    void submit(QStringList paths, QJSValue *callback);
+
+private slots:
+    void finished(QVariantMap usage, QJSValue *callback);
+
+private:
+    bool working() const { return m_working; }
+
+    void setWorking(bool working) {
+        if (m_working != working) {
+            m_working = working;
+            emit workingChanged();
+        }
     }
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
-        qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
-        qmlRegisterType<Sailfish::ArchiveModel>(uri, 1, 0, "ArchiveModel");
-        qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");
-        qmlRegisterType<DiskUsage>(uri, 1, 0, "DiskUsage");
-        qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
-
-        qRegisterMetaType<FileEngine::Error>("FileEngine::Error");
-    }
+private:
+    QScopedPointer<DiskUsagePrivate> const d_ptr;
+    QVariantMap m_result;
+    bool m_working;
 };
 
-#include "plugin.moc"
+#endif /* DISKUSAGE_H */
