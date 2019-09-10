@@ -1,6 +1,6 @@
 Name:       nemo-qml-plugin-filemanager
 Summary:    File manager plugin for Nemo Mobile
-Version:    0.0.0
+Version:    0.1.14
 Release:    1
 Group:      System/Libraries
 License:    BSD
