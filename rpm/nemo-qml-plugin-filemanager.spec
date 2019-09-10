@@ -34,13 +34,6 @@ Requires:   %{name} = %{version}-%{release}
 %description tests
 %{summary}.
 
-%package unit-tests
-Summary:    File manager C++ library (unit tests)
-Group:      System/Libraries
-
-%description unit-tests
-%{summary}.
-
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -51,8 +44,8 @@ make %{?_smp_mflags}
 %install
 rm -rf %{buildroot}
 %qmake5_install
-chmod o+w -R %{buildroot}/opt/tests/nemo-qml-plugins/filemanager/auto/folder
-chmod o-r -R %{buildroot}/opt/tests/nemo-qml-plugins/filemanager/auto/hiddenfolder
+chmod o+w -R %{buildroot}/%{_libdir}/%{name}-tests/auto/folder
+chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 
 %files
 %defattr(-,root,root,-)
@@ -72,10 +65,6 @@ chmod o-r -R %{buildroot}/opt/tests/nemo-qml-plugins/filemanager/auto/hiddenfold
 
 %files tests
 %defattr(-,root,root,-)
-/opt/tests/nemo-qml-plugins/filemanager/
-
-%files unit-tests
-%defattr(-,root,root,-)
-%{_libdir}/%{name}-tests/ut_diskusage
+%{_libdir}/%{name}-tests
 %{_datadir}/%{name}-tests/tests.xml
 
