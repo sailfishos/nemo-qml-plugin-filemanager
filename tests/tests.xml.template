@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testdefinition version="1.0">
 <suite name="@PACKAGENAME@-tests" domain="Middleware">
+  <set name="@PACKAGENAME@-qml" feature="@PACKAGENAME@">
+    <case name="FileModel">
+      <step>cd /usr/lib/@PACKAGENAME@-tests/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filemodel.qml</step>
+    </case>
+    <case name="FileEngine">
+      <step>cd /usr/lib/@PACKAGENAME@-tests/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_fileengine.qml</step>
+    </case>
+  </set>
   <set name="@PACKAGENAME@-diskusage" description="ut_diskusage" feature="@PACKAGENAME@">
     <case name="testSimple" description="Test basic functionality"
       type="Functional" level="Component" timeout="600">

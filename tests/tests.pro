@@ -1,12 +1,14 @@
-TEMPLATE = aux
+include(common.pri)
 
-QML_FILES =  auto/tst_*.qml
-OTHER_FILES += $${QML_FILES}
+TEMPLATE = subdirs
+SUBDIRS = auto \
+    ut_diskusage
 
-target.files = $${QML_FILES} auto/folder auto/hiddenfolder auto/protectedfolder
-target.path = /opt/tests/nemo-qml-plugins/filemanager/auto
+OTHER_FILES += tests.xml.template
 
-definition.files = tests.xml
-definition.path = /opt/tests/nemo-qml-plugins/filemanager/test-definition
+system(sed -e s/@PACKAGENAME@/$${PACKAGENAME}/g tests.xml.template > tests.xml)
 
-INSTALLS += target definition
+xml.path = /usr/share/$${PACKAGENAME}-tests
+xml.files = tests.xml
+
+INSTALLS += xml

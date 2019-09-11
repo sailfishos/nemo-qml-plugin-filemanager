@@ -1,19 +1,12 @@
-# based on tests.pro from libprofile-qt
-
-PACKAGENAME = nemo-qml-plugin-filemanager
+include (../common.pri)
 
 QT += testlib qml dbus
 QT -= gui
-
-system(sed -e s/@PACKAGENAME@/$${PACKAGENAME}/g tests.xml.template > tests.xml)
 
 TEMPLATE = app
 TARGET = ut_diskusage
 
 target.path = /usr/lib/$${PACKAGENAME}-tests
-
-xml.path = /usr/share/$${PACKAGENAME}-tests
-xml.files = tests.xml
 
 contains(cov, true) {
     message("Coverage options enabled")
@@ -37,4 +30,4 @@ SOURCES += ../../src/plugin/diskusage.cpp
 HEADERS += ../../src/plugin/diskusage.h
 HEADERS += ../../src/plugin/diskusage_p.h
 
-INSTALLS += target xml
+INSTALLS += target
