@@ -13,8 +13,21 @@ Module {
         prototype: "QObject"
         exports: ["Nemo.FileManager/DiskUsage 1.0"]
         exportMetaObjectRevisions: [0]
+        Enum {
+            name: "Status"
+            values: {
+                "Idle": 0,
+                "Calculating": 1,
+                "Counting": 2
+            }
+        }
         Property { name: "working"; type: "bool"; isReadonly: true }
         Property { name: "result"; type: "QVariantMap"; isReadonly: true }
+        Property { name: "status"; type: "Status" }
+        Signal {
+            name: "statusChanged"
+            Parameter { name: "status"; type: "Status" }
+        }
         Signal {
             name: "submit"
             Parameter { name: "paths"; type: "QStringList" }
@@ -23,6 +36,17 @@ Module {
         Method {
             name: "calculate"
             Parameter { name: "paths"; type: "QStringList" }
+            Parameter { name: "callback"; type: "QJSValue" }
+        }
+        Method {
+            name: "fileCount"
+            Parameter { name: "path"; type: "string" }
+            Parameter { name: "callback"; type: "QJSValue" }
+            Parameter { name: "recursive"; type: "bool" }
+        }
+        Method {
+            name: "fileCount"
+            Parameter { name: "path"; type: "string" }
             Parameter { name: "callback"; type: "QJSValue" }
         }
     }

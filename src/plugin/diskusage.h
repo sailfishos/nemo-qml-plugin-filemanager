@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Jolla Ltd.
- * Contact: Thomas Perl <thomas.perl@jolla.com>
+ * Copyright (C) 2015 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -51,41 +51,48 @@ class FILEMANAGER_EXPORT DiskUsage: public QObject
     Q_PROPERTY(bool working READ working NOTIFY workingChanged)
 
     Q_PROPERTY(QVariantMap result READ result NOTIFY resultChanged)
+    Q_PROPERTY(Status status READ status WRITE setStatus NOTIFY statusChanged)
+
 
 public:
-    explicit DiskUsage(QObject *parent=nullptr);
+    explicit DiskUsage(QObject *parent = nullptr);
     virtual ~DiskUsage();
+
+    enum Status{
+        Idle,
+        Calculating,
+        Counting
+    };
+    Q_ENUM(Status)
 
     // Calculate the disk usage of the given paths, then call
     // callback with a QVariantMap (mapping paths to usages in bytes)
     Q_INVOKABLE void calculate(const QStringList &paths, QJSValue callback);
-
+    Q_INVOKABLE void fileCount(const QString &path, QJSValue callback, bool recursive = false);
     QVariantMap result() const;
 
 signals:
     void workingChanged();
     void resultChanged();
+    void statusChanged(Status status);
 
 signals:
-    void submit(QStringList paths, QJSValue *callback);
+    void submit(QStringList paths, QJSValue *callback, QPrivateSignal);
+    void startCounting(const QString &path, QJSValue *callback, bool recursive, QPrivateSignal);
 
 private slots:
     void finished(QVariantMap usage, QJSValue *callback);
+    void countingFinished(const int &counter, QJSValue *callback);
 
 private:
-    bool working() const { return m_working; }
+    bool working() const;
+    Status status() const;
 
-    void setWorking(bool working) {
-        if (m_working != working) {
-            m_working = working;
-            emit workingChanged();
-        }
-    }
+    void setStatus(Status status);
+    void setWorking(bool working);
 
 private:
-    QScopedPointer<DiskUsagePrivate> const d_ptr;
-    QVariantMap m_result;
-    bool m_working;
+    QScopedPointer<DiskUsagePrivate> const d_ptr;   
 };
 
 #endif /* DISKUSAGE_H */

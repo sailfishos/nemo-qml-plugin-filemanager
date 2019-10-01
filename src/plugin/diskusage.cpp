@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015 Jolla Ltd.
- * Contact: Thomas Perl <thomas.perl@jolla.com>
+ * Copyright (C) 2015 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -37,11 +37,12 @@
 #include <QDebug>
 #include <QJSEngine>
 #include <QDir>
-
+#include <QDirIterator>
 
 DiskUsageWorker::DiskUsageWorker(QObject *parent)
     : QObject(parent)
     , m_quit(false)
+    , m_stopCounting{false}
 {
 }
 
@@ -54,8 +55,35 @@ void DiskUsageWorker::submit(QStringList paths, QJSValue *callback)
     emit finished(calculate(paths), callback);
 }
 
-QVariantMap DiskUsageWorker::calculate(QStringList paths)
+void DiskUsageWorker::startCounting(const QString &path, QJSValue *callback, bool recursive)
 {
+    emit countingFinished(counting(path, recursive), callback);
+}
+
+int DiskUsageWorker::counting(const QString &path, bool recursive)
+{
+    m_stopCounting = false;
+
+    QFileInfo fileinfo(path);
+    if (!fileinfo.isDir() || !fileinfo.exists())
+        return 0;
+
+    QDir::Filters filters = (QDir::Files | QDir::NoDotAndDotDot);
+    QDirIterator it(path, filters, recursive ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
+    int counter = 0;
+
+    while (it.hasNext()) {
+        if (m_stopCounting)
+            return counter;
+
+        it.next();
+        counter++;
+    }
+    return counter;
+}
+
+QVariantMap DiskUsageWorker::calculate(QStringList paths)
+{    
     QVariantMap usage;
     // expanded Path places the object in the tree so parents can have it subtracted from its total
     QMap<QString, QString> expandedPaths; // input path -> expanded path
@@ -153,26 +181,37 @@ public:
 private:
     QThread *m_thread;
     DiskUsageWorker *m_worker;
+    bool m_working;
+    DiskUsage::Status m_status;
+    QVariantMap m_result;
 };
 
 DiskUsagePrivate::DiskUsagePrivate(DiskUsage *usage)
     : q_ptr(usage)
     , m_thread(new QThread())
     , m_worker(new DiskUsageWorker())
+    , m_working(false)
+    , m_status(DiskUsage::Idle)
 {
     m_worker->moveToThread(m_thread);
 
-    QObject::connect(usage, SIGNAL(submit(QStringList, QJSValue *)),
-                     m_worker, SLOT(submit(QStringList, QJSValue *)));
+    QObject::connect(usage, &DiskUsage::submit,
+                     m_worker, &DiskUsageWorker::submit);
 
-    QObject::connect(m_worker, SIGNAL(finished(QVariantMap, QJSValue *)),
-                     usage, SLOT(finished(QVariantMap, QJSValue *)));
+    QObject::connect(m_worker, &DiskUsageWorker::finished,
+                     usage,  &DiskUsage::finished);
 
-    QObject::connect(m_thread, SIGNAL(finished()),
-                     m_worker, SLOT(deleteLater()));
+    QObject::connect(m_thread, &QThread::finished,
+                     m_worker, &DiskUsageWorker::deleteLater);
 
-    QObject::connect(m_thread, SIGNAL(finished()),
-                     m_thread, SLOT(deleteLater()));
+    QObject::connect(m_thread, &QThread::finished,
+                     m_thread, &QThread::deleteLater);
+
+    QObject::connect(usage, &DiskUsage::startCounting,
+                     m_worker, &DiskUsageWorker::startCounting);
+
+    QObject::connect(m_worker, &DiskUsageWorker::countingFinished,
+                     usage, &DiskUsage::countingFinished);
 
     m_thread->start();
 }
@@ -181,6 +220,7 @@ DiskUsagePrivate::~DiskUsagePrivate()
 {
     // Make sure the worker quits as soon as possible
     m_worker->scheduleQuit();
+    m_worker->sheduleStopCounting();
 
     // Tell thread to shut down as early as possible
     m_thread->quit();
@@ -190,7 +230,6 @@ DiskUsagePrivate::~DiskUsagePrivate()
 DiskUsage::DiskUsage(QObject *parent)
     : QObject(parent)
     , d_ptr(new DiskUsagePrivate(this))
-    , m_working(false)
 {
 }
 
@@ -200,14 +239,27 @@ DiskUsage::~DiskUsage()
 
 void DiskUsage::calculate(const QStringList &paths, QJSValue callback)
 {
-    QJSValue *cb = 0;
+    QJSValue *cb = nullptr;
 
     if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
         cb = new QJSValue(callback);
     }
 
+    setStatus(DiskUsage::Calculating);
     setWorking(true);
-    emit submit(paths, cb);
+    emit submit(paths, cb, QPrivateSignal());
+}
+
+void DiskUsage::fileCount(const QString &path, QJSValue callback, bool recursive)
+{
+    QJSValue *cb = nullptr;
+
+    if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
+        cb = new QJSValue(callback);
+    }
+
+    setStatus(DiskUsage::Counting);
+    emit startCounting(path, cb, recursive, QPrivateSignal());
 }
 
 void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
@@ -218,13 +270,54 @@ void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
     }
 
     // the result has been set, so emit resultChanged() even if result was not valid
-    m_result = usage;
+    Q_D(DiskUsage);
+    d->m_result = usage;
     emit resultChanged();
 
+    setStatus(DiskUsage::Idle);
     setWorking(false);
+}
+
+void DiskUsage::countingFinished(const int &counter, QJSValue *callback)
+{
+    if (callback) {
+        callback->call(QJSValueList() << callback->engine()->toScriptValue(counter));
+        delete callback;
+    }
+
+    setStatus(DiskUsage::Idle);
+}
+
+bool DiskUsage::working() const {
+    Q_D(const DiskUsage);
+    return d->m_working;
+}
+
+DiskUsage::Status DiskUsage::status() const {
+    Q_D(const DiskUsage);
+    return d->m_status;
+}
+
+void DiskUsage::setWorking(bool working) {
+    Q_D(DiskUsage);
+    if (d->m_working != working) {
+        d->m_working = working;
+        emit workingChanged();
+    }
 }
 
 QVariantMap DiskUsage::result() const
 {
-    return m_result;
+    Q_D(const DiskUsage);
+    return d->m_result;
+}
+
+void DiskUsage::setStatus(DiskUsage::Status status)
+{
+    Q_D(DiskUsage);
+    if (d->m_status == status)
+        return;
+
+    d->m_status = status;
+    emit statusChanged(d->m_status);
 }
