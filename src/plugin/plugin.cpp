@@ -70,6 +70,7 @@ public:
         qmlRegisterSingletonType<FileEngine>(uri, 1, 0, "FileEngine", engine_api_factory);
 
         qRegisterMetaType<FileEngine::Error>("FileEngine::Error");
+        qRegisterMetaType<DiskUsage::Filter>("DiskUsage::Filter");
     }
 };
 

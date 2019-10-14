@@ -36,6 +36,7 @@
 #include <QObject>
 #include <QVariant>
 #include <QJSValue>
+#include <diskusage.h>
 
 class DiskUsageWorker : public QObject
 {
@@ -50,7 +51,7 @@ public:
 
 public slots:
     void submit(QStringList paths, QJSValue *callback);
-    void startCounting(const QString &path, QJSValue *callback, bool recursive);
+    void startCounting(const QString &path, QJSValue *callback, DiskUsage::Filter filter, bool recursive);
 
 signals:
     void finished(QVariantMap usage, QJSValue *callback);
@@ -61,7 +62,7 @@ private:
     quint64 calculateSize(QString directory, QString *expandedPath, bool androidHomeExists);
     quint64 calculateRpmSize(const QString &glob);
     quint64 calculateApkdSize(const QString &rest);
-    int counting(const QString &path, bool recursive);
+    int counting(const QString &path, DiskUsage::Filter filter, bool recursive);
 
     bool m_quit;
     bool m_stopCounting;
