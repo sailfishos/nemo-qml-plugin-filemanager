@@ -37,6 +37,7 @@
 #include <QVariant>
 #include <QJSValue>
 #include <QScopedPointer>
+#include <QDir>
 
 #include <filemanagerglobal.h>
 
@@ -58,17 +59,24 @@ public:
     explicit DiskUsage(QObject *parent = nullptr);
     virtual ~DiskUsage();
 
-    enum Status{
+    enum Status {
         Idle,
         Calculating,
         Counting
     };
     Q_ENUM(Status)
 
+    enum Filter {
+        Files = QDir::Files,
+        Dirs = QDir::Dirs,
+        AllEntries = QDir::AllEntries
+    };
+    Q_ENUM(Filter)
+
     // Calculate the disk usage of the given paths, then call
     // callback with a QVariantMap (mapping paths to usages in bytes)
     Q_INVOKABLE void calculate(const QStringList &paths, QJSValue callback);
-    Q_INVOKABLE void fileCount(const QString &path, QJSValue callback, bool recursive = false);
+    Q_INVOKABLE void fileCount(const QString &path, QJSValue callback, DiskUsage::Filter filter, bool recursive = false);
     QVariantMap result() const;
 
 signals:
@@ -78,7 +86,7 @@ signals:
 
 signals:
     void submit(QStringList paths, QJSValue *callback, QPrivateSignal);
-    void startCounting(const QString &path, QJSValue *callback, bool recursive, QPrivateSignal);
+    void startCounting(const QString &path, QJSValue *callback, DiskUsage::Filter filter, bool recursive, QPrivateSignal);
 
 private slots:
     void finished(QVariantMap usage, QJSValue *callback);

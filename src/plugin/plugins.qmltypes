@@ -21,6 +21,14 @@ Module {
                 "Counting": 2
             }
         }
+        Enum {
+            name: "Filter"
+            values: {
+                "Files": 2,
+                "Dirs": 1,
+                "AllEntries": 7
+            }
+        }
         Property { name: "working"; type: "bool"; isReadonly: true }
         Property { name: "result"; type: "QVariantMap"; isReadonly: true }
         Property { name: "status"; type: "Status" }
@@ -42,12 +50,14 @@ Module {
             name: "fileCount"
             Parameter { name: "path"; type: "string" }
             Parameter { name: "callback"; type: "QJSValue" }
+            Parameter { name: "filter"; type: "Filter" }
             Parameter { name: "recursive"; type: "bool" }
         }
         Method {
             name: "fileCount"
             Parameter { name: "path"; type: "string" }
             Parameter { name: "callback"; type: "QJSValue" }
+            Parameter { name: "filter"; type: "Filter" }
         }
     }
     Component {

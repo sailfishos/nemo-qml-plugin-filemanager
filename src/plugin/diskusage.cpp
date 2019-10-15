@@ -55,12 +55,12 @@ void DiskUsageWorker::submit(QStringList paths, QJSValue *callback)
     emit finished(calculate(paths), callback);
 }
 
-void DiskUsageWorker::startCounting(const QString &path, QJSValue *callback, bool recursive)
+void DiskUsageWorker::startCounting(const QString &path, QJSValue *callback, DiskUsage::Filter filter, bool recursive)
 {
-    emit countingFinished(counting(path, recursive), callback);
+    emit countingFinished(counting(path, filter, recursive), callback);
 }
 
-int DiskUsageWorker::counting(const QString &path, bool recursive)
+int DiskUsageWorker::counting(const QString &path, DiskUsage::Filter filter, bool recursive)
 {
     m_stopCounting = false;
 
@@ -68,7 +68,7 @@ int DiskUsageWorker::counting(const QString &path, bool recursive)
     if (!fileinfo.isDir() || !fileinfo.exists())
         return 0;
 
-    QDir::Filters filters = (QDir::Files | QDir::NoDotAndDotDot);
+    QDir::Filters filters = static_cast<QDir::Filter>(filter | QDir::NoDotAndDotDot);
     QDirIterator it(path, filters, recursive ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
     int counter = 0;
 
@@ -250,7 +250,7 @@ void DiskUsage::calculate(const QStringList &paths, QJSValue callback)
     emit submit(paths, cb, QPrivateSignal());
 }
 
-void DiskUsage::fileCount(const QString &path, QJSValue callback, bool recursive)
+void DiskUsage::fileCount(const QString &path, QJSValue callback, DiskUsage::Filter filter, bool recursive)
 {
     QJSValue *cb = nullptr;
 
@@ -259,7 +259,7 @@ void DiskUsage::fileCount(const QString &path, QJSValue callback, bool recursive
     }
 
     setStatus(DiskUsage::Counting);
-    emit startCounting(path, cb, recursive, QPrivateSignal());
+    emit startCounting(path, cb, filter, recursive, QPrivateSignal());
 }
 
 void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
