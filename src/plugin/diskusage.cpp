@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 - 2019 Jolla Ltd.
+ * Copyright (c) 2015 - 2019 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * You may use this file under the terms of the BSD license as follows:
@@ -126,8 +126,8 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
     // Sort keys in reverse order (so child directories come before their
     // parents, and the calculation is done correctly, no child directory
     // subtracted once too often), for example:
-    //  1. a0 = size(/home/nemo/foo/)
-    //  2. b0 = size(/home/nemo/)
+    //  1. a0 = size(/home/<user>/foo/)
+    //  2. b0 = size(/home/<user>/)
     //  3. c0 = size(/)
     //
     // This will calculate the following changes in the nested for loop below:
@@ -141,9 +141,9 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
     //  3. c' = c2 = c1 - b1 = (c0 - a0) - (b0 - a0) = c0 - a0 - b0 + a0 = c0 - b0
     //
     // Or with paths:
-    //  1. output(/home/nemo/foo/) = size(/home/nemo/foo/)
-    //  2. output(/home/nemo/)     = size(/home/nemo/)     - size(/home/nemo/foo/)
-    //  3. output(/)               = size(/)               - size(/home/nemo/)
+    //  1. output(/home/<user>/foo/) = size(/home/<user>/foo/)
+    //  2. output(/home/<user>/)     = size(/home/<user>/)     - size(/home/<user>/foo/)
+    //  3. output(/)               = size(/)               - size(/home/<user>/)
     QStringList keys;
     foreach (const QString &key, usage.uniqueKeys()) {
         keys << expandedPaths.value(key, key);
