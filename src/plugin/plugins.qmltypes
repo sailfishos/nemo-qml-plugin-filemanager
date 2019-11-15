@@ -41,6 +41,13 @@ Module {
             Parameter { name: "paths"; type: "QStringList" }
             Parameter { name: "callback"; type: "QJSValue"; isPointer: true }
         }
+        Signal {
+            name: "startCounting"
+            Parameter { name: "path"; type: "string" }
+            Parameter { name: "callback"; type: "QJSValue"; isPointer: true }
+            Parameter { name: "filter"; type: "DiskUsage::Filter" }
+            Parameter { name: "recursive"; type: "bool" }
+        }
         Method {
             name: "calculate"
             Parameter { name: "paths"; type: "QStringList" }
@@ -50,14 +57,14 @@ Module {
             name: "fileCount"
             Parameter { name: "path"; type: "string" }
             Parameter { name: "callback"; type: "QJSValue" }
-            Parameter { name: "filter"; type: "Filter" }
+            Parameter { name: "filter"; type: "DiskUsage::Filter" }
             Parameter { name: "recursive"; type: "bool" }
         }
         Method {
             name: "fileCount"
             Parameter { name: "path"; type: "string" }
             Parameter { name: "callback"; type: "QJSValue" }
-            Parameter { name: "filter"; type: "Filter" }
+            Parameter { name: "filter"; type: "DiskUsage::Filter" }
         }
     }
     Component {
