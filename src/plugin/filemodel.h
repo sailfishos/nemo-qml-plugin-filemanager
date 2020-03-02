@@ -208,7 +208,7 @@ public:
         SelectedCountChanged          = (1 << 13),
         ContentChanged                = (1 << 14),
     };
-    Q_DECLARE_FLAGS(ChangedFlags, Changed);
+    Q_DECLARE_FLAGS(ChangedFlags, Changed)
 
 private:
     void recountSelectedFiles();
