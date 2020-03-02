@@ -340,7 +340,7 @@ FileExtractionResult ArchiveModelPrivate::doExtractFile(const QString &entryName
         return result;
     }
 
-    qCDebug(lcArchiveLog) << "Extraing a file:" << targetPath;
+    qCDebug(lcArchiveLog) << "Extracting a file:" << targetPath;
 
     bool extracted = false;
     QString out;

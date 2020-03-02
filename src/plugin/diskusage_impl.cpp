@@ -43,7 +43,6 @@
 
 quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath, bool androidHomeExists)
 {
-
     // In lieu of wordexp(3) support in Qt, fake it
     if (directory.startsWith("~/")) {
         directory = QDir::homePath() + '/' + directory.mid(2);
@@ -68,7 +67,7 @@ quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath,
     }
 
     QProcess du;
-    du.start("du", QStringList() << "-sbx" << directory, QIODevice::ReadOnly);
+    du.start("du", QStringList() << "-skx" << directory, QIODevice::ReadOnly);
     du.waitForFinished();
     if (du.exitStatus() != QProcess::NormalExit) {
         qWarning() << "Could not determine size of:" << directory;
@@ -77,7 +76,7 @@ quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath,
     QStringList size_directory = QString::fromUtf8(du.readAll()).split('\t');
 
     if (size_directory.size() > 1) {
-        return size_directory[0].toULongLong();
+        return size_directory[0].toULongLong() * 1024;
     }
 
     return 0L;
