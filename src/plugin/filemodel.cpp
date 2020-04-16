@@ -59,11 +59,11 @@ enum {
     BaseNameRole
 };
 
-int access(QString fileName, int how)
+int euidaccess(QString fileName, int how)
 {
     QByteArray fab = fileName.toUtf8();
     char *fn = fab.data();
-    return ::access(fn, how);
+    return ::euidaccess(fn, how);
 }
 
 QVector<StatFileInfo> directoryEntries(const QDir &dir)
@@ -461,7 +461,7 @@ void FileModel::readAllEntries()
         return;
     }
 
-    if (access(dir.path(), R_OK) == -1) {
+    if (euidaccess(dir.path(), R_OK) == -1) {
         qmlInfo(this) << "No permissions to access " << dir.path();
         emit error(ErrorReadNoPermissions, dir.path());
         return;
@@ -488,7 +488,7 @@ void FileModel::refreshEntries()
             return;
         }
 
-        if (access(dir.path(), R_OK) == -1) {
+        if (euidaccess(dir.path(), R_OK) == -1) {
             clearModel();
             qmlInfo(this) << "No permissions to access " << dir.path();
             emit error(ErrorReadNoPermissions, dir.path());
