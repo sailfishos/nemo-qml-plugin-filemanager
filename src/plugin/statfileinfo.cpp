@@ -109,7 +109,7 @@ void StatFileInfo::refresh()
     char *fn = ba.data();
 
     // check the file without following symlinks
-    int res = lstat(fn, &m_lstat);
+    int res = lstat64(fn, &m_lstat);
     if (res != 0) { // if error, then set to undefined
         m_lstat.st_mode = 0;
     }
@@ -120,7 +120,7 @@ void StatFileInfo::refresh()
     }
 
     // check the file after following possible symlinks
-    res = stat(fn, &m_stat);
+    res = stat64(fn, &m_stat);
     if (res != 0) { // if error, then set to undefined
         m_stat.st_mode = 0;
     }
