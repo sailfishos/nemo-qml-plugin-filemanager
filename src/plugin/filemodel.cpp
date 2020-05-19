@@ -310,7 +310,8 @@ void FileModel::setActive(bool active)
         return;
 
     m_active = active;
-    scheduleUpdate(ActiveChanged | ContentChanged);
+    scheduleUpdate(m_active ? (ActiveChanged | ContentChanged)
+                            : ActiveChanged);
 }
 
 QString FileModel::appendPath(QString pathName)
