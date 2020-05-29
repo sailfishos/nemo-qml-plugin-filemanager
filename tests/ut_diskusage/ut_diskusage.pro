@@ -6,7 +6,7 @@ QT -= gui
 TEMPLATE = app
 TARGET = ut_diskusage
 
-target.path = /usr/lib/$${PACKAGENAME}-tests
+target.path = $$[QT_INSTALL_LIBS]/$${PACKAGENAME}-tests
 
 contains(cov, true) {
     message("Coverage options enabled")
@@ -19,7 +19,7 @@ DEFINES += UNIT_TEST
 QMAKE_EXTRA_TARGETS = check
 
 check.depends = $$TARGET
-check.commands = LD_LIBRARY_PATH=../../lib ./$$TARGET
+check.commands = LD_LIBRARY_PATH=../../../$$[QT_INSTALL_LIBS] ./$$TARGET
 
 INCLUDEPATH += ../../src/plugin/
 

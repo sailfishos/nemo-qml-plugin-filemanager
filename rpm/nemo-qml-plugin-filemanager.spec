@@ -2,9 +2,8 @@ Name:       nemo-qml-plugin-filemanager
 Summary:    File manager plugin for Nemo Mobile
 Version:    0.1.21
 Release:    1
-Group:      System/Libraries
 License:    BSD
-URL:        https://git.merproject.org/mer-core/nemo-qml-plugin-filemanager
+URL:        https://git.sailfishos.org/mer-core/nemo-qml-plugin-filemanager
 Source0:    %{name}-%{version}.tar.bz2
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -22,7 +21,6 @@ BuildRequires:  pkgconfig(KF5Archive)
 
 %package devel
 Summary:    Filemanager C++ library
-Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description devel
@@ -30,7 +28,6 @@ Requires:   %{name} = %{version}-%{release}
 
 %package tests
 Summary:    File manager plugin tests
-Group:      System/Libraries
 Requires:   %{name} = %{version}-%{release}
 
 %description tests
