@@ -1,6 +1,6 @@
 Name:       nemo-qml-plugin-filemanager
 Summary:    File manager plugin for Nemo Mobile
-Version:    0.1.21
+Version:    0.1.25
 Release:    1
 License:    BSD
 URL:        https://git.sailfishos.org/mer-core/nemo-qml-plugin-filemanager
