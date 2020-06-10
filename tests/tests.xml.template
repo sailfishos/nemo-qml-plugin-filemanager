@@ -3,36 +3,36 @@
 <suite name="@PACKAGENAME@-tests" domain="Middleware">
   <set name="@PACKAGENAME@-qml" feature="@PACKAGENAME@">
     <case name="FileModel">
-      <step>cd /usr/lib/@PACKAGENAME@-tests/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_filemodel.qml</step>
+      <step>cd @LIBDIR@@PACKAGENAME@-tests/auto &amp;&amp; @LIBDIR@/qt5/bin/qmltestrunner -input tst_filemodel.qml</step>
     </case>
     <case name="FileEngine">
-      <step>cd /usr/lib/@PACKAGENAME@-tests/auto &amp;&amp; /usr/lib/qt5/bin/qmltestrunner -input tst_fileengine.qml</step>
+      <step>cd @LIBDIR@@PACKAGENAME@-tests/auto &amp;&amp; @LIBDIR@/qt5/bin/qmltestrunner -input tst_fileengine.qml</step>
     </case>
   </set>
   <set name="@PACKAGENAME@-diskusage" description="ut_diskusage" feature="@PACKAGENAME@">
     <case name="testSimple" description="Test basic functionality"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSimple</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSimple</step>
     </case>
     <case name="testSubtractApkdFromRoot" description="Test if subtracting :apkd: from / works"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSubtractApkdFromRoot</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSubtractApkdFromRoot</step>
     </case>
     <case name="testSubtractRPMFromRoot" description="Test if subtracting :rpm: from / works"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSubtractRPMFromRoot</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSubtractRPMFromRoot</step>
     </case>
     <case name="testSubtractSubdirectory" description="Test if subtracting a subdirectory works"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSubtractSubdirectory</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSubtractSubdirectory</step>
     </case>
     <case name="testSubtractNestedSubdirectory" description="Test if subtracting nested subdirectories works"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSubtractNestedSubdirectory</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSubtractNestedSubdirectory</step>
     </case>
     <case name="testSubtractNestedSubdirectoryMulti" description="Test if subtracting nested and sibling subdirectories works"
       type="Functional" level="Component" timeout="600">
-      <step expected_result="0">/usr/lib/@PACKAGENAME@-tests/ut_diskusage testSubtractNestedSubdirectoryMulti</step>
+      <step expected_result="0">@LIBDIR@@PACKAGENAME@-tests/ut_diskusage testSubtractNestedSubdirectoryMulti</step>
     </case>
   </set>
 </suite>
