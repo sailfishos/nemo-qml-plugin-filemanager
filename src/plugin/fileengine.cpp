@@ -86,6 +86,7 @@ void FileEngine::cutFiles(QStringList fileNames)
     m_clipboardFiles = fileNames;
     m_clipboardContainsCopy = false;
     emit clipboardCountChanged();
+    emit clipboardFilesChanged();
     emit clipboardContainsCopyChanged();
 }
 
@@ -104,6 +105,7 @@ void FileEngine::copyFiles(QStringList fileNames)
         m_clipboardFiles = fileNames;
         m_clipboardContainsCopy = true;
         emit clipboardCountChanged();
+        emit clipboardFilesChanged();
         emit clipboardContainsCopyChanged();
     }
 }
@@ -147,6 +149,7 @@ void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
 
     m_clipboardFiles.clear();
     emit clipboardCountChanged();
+    emit clipboardFilesChanged();
 
     if (m_clipboardContainsCopy) {
         m_fileWorker->startCopyFiles(files, destDirectory, nonprivileged);

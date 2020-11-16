@@ -45,6 +45,7 @@ class FileEngine : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int clipboardCount READ clipboardCount NOTIFY clipboardCountChanged)
+    Q_PROPERTY(QStringList clipboardFiles READ clipboardFiles NOTIFY clipboardFilesChanged)
     Q_PROPERTY(bool clipboardContainsCopy READ clipboardContainsCopy NOTIFY clipboardContainsCopyChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(Mode mode READ mode NOTIFY modeChanged)
@@ -78,7 +79,9 @@ public:
     };
 
     // properties
+    // deprecated - use clipboardFiles length
     int clipboardCount() const { return m_clipboardFiles.count(); }
+    QStringList clipboardFiles() const { return m_clipboardFiles; }
     bool clipboardContainsCopy() const { return m_clipboardContainsCopy; }
     bool busy() const;
     Mode mode() const;
@@ -106,6 +109,7 @@ public:
 
 signals:
     void clipboardCountChanged();
+    void clipboardFilesChanged();
     void clipboardContainsCopyChanged();
     void workerDone();
     void error(Error error, QString fileName);
