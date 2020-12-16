@@ -101,6 +101,7 @@ Module {
             }
         }
         Property { name: "clipboardCount"; type: "int"; isReadonly: true }
+        Property { name: "clipboardFiles"; type: "QStringList"; isReadonly: true }
         Property { name: "clipboardContainsCopy"; type: "bool"; isReadonly: true }
         Property { name: "busy"; type: "bool"; isReadonly: true }
         Property { name: "mode"; type: "Mode"; isReadonly: true }
