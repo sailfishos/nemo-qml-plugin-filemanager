@@ -215,3 +215,8 @@ bool FileEngine::chmod(QString path,
     }
     return true;
 }
+
+QString FileEngine::extensionForFileName(const QString &fileName) const
+{
+    return QMimeDatabase().suffixForFileName(fileName);
+}

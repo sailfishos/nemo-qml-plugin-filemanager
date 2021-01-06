@@ -43,7 +43,6 @@
 #include <QBasicTimer>
 #include <QDir>
 #include <QFileSystemWatcher>
-#include <QMimeDatabase>
 #include <QVector>
 
 /**
@@ -242,7 +241,6 @@ private:
     QStringList m_nameFilters;
     QVector<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
-    QMimeDatabase m_mimeDatabase;
     QBasicTimer m_timer;
     ChangedFlags m_changedFlags;
 };

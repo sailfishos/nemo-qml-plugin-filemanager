@@ -50,8 +50,11 @@ public:
     explicit StatFileInfo(QString fileName);
     ~StatFileInfo();
 
+    QString file() const { return m_fileName; }
     void setFile(QString fileName);
     QString fileName() const { return m_fileInfo.fileName(); }
+
+    QString mimeType() const { return m_mimeType; }
 
     // these inspect the file itself without following symlinks
 
@@ -105,8 +108,8 @@ public:
     QDateTime lastModified() const { return m_fileInfo.lastModified(); }
     QDateTime lastAccessed() const { return m_fileInfo.lastRead(); }
     QDateTime created() const { return m_fileInfo.created(); }
-    QString extension() const;
-    QString baseName() const;
+    QString extension() const { return m_extension; }
+    QString baseName() const { return m_baseName; }
     bool exists() const;
     bool isSafeToRead() const;
 
@@ -125,8 +128,14 @@ public:
 
     void refresh();
 
+protected:
+    virtual void fileChanged() {}
+
 private:
     QString m_fileName;
+    QString m_baseName;
+    QString m_extension;
+    QString m_mimeType;
     QFileInfo m_fileInfo;
     Sailfish::ArchiveInfo m_archiveInfo;
     struct stat64 m_stat; // after following possible symlinks
@@ -136,5 +145,32 @@ private:
 
 bool operator==(const StatFileInfo &lhs, const StatFileInfo &rhs);
 bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs);
+
+class FileInfo : public QObject, protected StatFileInfo
+{
+    Q_OBJECT
+    Q_PROPERTY(QString file READ file WRITE setFile NOTIFY fileChanged)
+    Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
+    Q_PROPERTY(QString mimeType READ mimeType NOTIFY fileChanged)
+    Q_PROPERTY(qint64 size READ size NOTIFY fileChanged)
+    Q_PROPERTY(QDateTime lastModified READ lastModified NOTIFY fileChanged)
+    Q_PROPERTY(bool isDir READ isDirAtEnd NOTIFY fileChanged)
+    Q_PROPERTY(bool isArchive READ isArchive NOTIFY fileChanged)
+    Q_PROPERTY(bool isLink READ isSymLink NOTIFY fileChanged)
+    Q_PROPERTY(QString symLinkTarget READ symLinkTarget NOTIFY fileChanged)
+    Q_PROPERTY(QString extension READ extension NOTIFY fileChanged)
+    Q_PROPERTY(QString absolutePath READ absoluteFilePath NOTIFY fileChanged)
+    Q_PROPERTY(QDateTime accessed READ lastAccessed NOTIFY fileChanged)
+    Q_PROPERTY(QString baseName READ baseName NOTIFY fileChanged)
+    Q_PROPERTY(QString directoryPath READ absolutePath NOTIFY fileChanged)
+public:
+    explicit FileInfo(QObject *parent = nullptr);
+    ~FileInfo() override;
+
+    Q_INVOKABLE void refresh() { StatFileInfo::refresh(); }
+
+signals:
+    void fileChanged() override;
+};
 
 #endif // STATFILEINFO_H
