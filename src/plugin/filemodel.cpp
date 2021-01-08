@@ -131,7 +131,7 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
         return info.fileName();
 
     case MimeTypeRole:
-        return m_mimeDatabase.mimeTypeForFile(info.absoluteFilePath()).name();
+        return info.mimeType();
 
     case SizeRole:
         return info.size();

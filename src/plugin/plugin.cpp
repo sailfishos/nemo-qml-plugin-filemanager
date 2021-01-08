@@ -63,6 +63,7 @@ public:
     void registerTypes(const char *uri)
     {
         Q_ASSERT(uri == QLatin1String("Nemo.FileManager"));
+        qmlRegisterType<FileInfo>(uri, 1, 0, "FileInfo");
         qmlRegisterType<FileModel>(uri, 1, 0, "FileModel");
         qmlRegisterType<Sailfish::ArchiveModel>(uri, 1, 0, "ArchiveModel");
         qmlRegisterType<FileWatcher>(uri, 1, 0, "FileWatcher");

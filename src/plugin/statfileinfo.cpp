@@ -32,6 +32,8 @@
 
 #include "statfileinfo.h"
 
+#include <QMimeDatabase>
+
 StatFileInfo::StatFileInfo() :
     m_selected(false)
 {
@@ -50,25 +52,15 @@ StatFileInfo::~StatFileInfo()
 
 void StatFileInfo::setFile(QString fileName)
 {
-    m_fileName = fileName;
-    refresh();
+    if (m_fileName != fileName) {
+        m_fileName = fileName;
+        refresh();
+    }
 }
 
 bool StatFileInfo::exists() const
 {
     return m_fileInfo.exists();
-}
-
-QString StatFileInfo::extension() const
-{
-    // If there is only one token following a dot, prefer it to be the baseName
-    return m_fileInfo.completeBaseName().isEmpty() ? QString() : m_fileInfo.suffix();
-}
-
-QString StatFileInfo::baseName() const
-{
-    QString rv(m_fileInfo.completeBaseName());
-    return rv.isEmpty() ? m_fileInfo.fileName() : rv;
 }
 
 bool StatFileInfo::isSafeToRead() const
@@ -100,8 +92,29 @@ void StatFileInfo::refresh()
     memset(&m_lstat, 0, sizeof(m_lstat));
 
     m_fileInfo = QFileInfo(m_fileName);
-    if (m_fileName.isEmpty())
+    if (m_fileName.isEmpty()) {
+        m_mimeType = QString();
+        m_baseName = QString();
+        m_extension = QString();
+
+        fileChanged();
+
         return;
+    }
+
+    // QMimeDatabase is just a pointer to a global static instance of the actual database so there's
+    // no real cost to constructing one when needed.
+    QMimeDatabase mimeDatabase;
+
+    m_mimeType = mimeDatabase.mimeTypeForFile(m_fileInfo).name();
+    m_extension = mimeDatabase.suffixForFileName(m_fileName);
+    m_baseName = m_fileInfo.fileName();
+
+    if (m_baseName.lastIndexOf(m_extension) == 1) {
+        m_extension.clear();
+    } else {
+        m_baseName.chop(m_extension.length() + 1);
+    }
 
     m_archiveInfo.setFile(m_fileName);
 
@@ -115,16 +128,16 @@ void StatFileInfo::refresh()
     }
     // if not symlink, then just copy lstat data to stat
     if (!S_ISLNK(m_lstat.st_mode)) {
-        memcpy(&m_stat, &m_lstat, sizeof(m_stat));
-        return;
+        memcpy(&m_stat, &m_lstat, sizeof(m_stat));        
+    } else {
+        // check the file after following possible symlinks
+        res = stat64(fn, &m_stat);
+        if (res != 0) { // if error, then set to undefined
+            m_stat.st_mode = 0;
+        }
     }
 
-    // check the file after following possible symlinks
-    res = stat64(fn, &m_stat);
-    if (res != 0) { // if error, then set to undefined
-        m_stat.st_mode = 0;
-    }
-
+    fileChanged();
 }
 
 bool operator==(const StatFileInfo &lhs, const StatFileInfo &rhs)
@@ -143,3 +156,11 @@ bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs)
     return !operator==(lhs, rhs);
 }
 
+FileInfo::FileInfo(QObject *parent)
+    : QObject(parent)
+{
+}
+
+FileInfo::~FileInfo()
+{
+}

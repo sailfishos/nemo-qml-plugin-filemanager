@@ -106,6 +106,7 @@ public:
                               bool groupRead, bool groupWrite, bool groupExecute,
                               bool othersRead, bool othersWrite, bool othersExecute, bool nonprivileged = false);
 
+    Q_INVOKABLE QString extensionForFileName(const QString &fileName) const;
 
 signals:
     void clipboardCountChanged();
