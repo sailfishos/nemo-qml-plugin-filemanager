@@ -76,6 +76,16 @@ Item {
             {fileName: ".hidden", baseName: ".hidden", extension: "", mimeType: "text/plain", size: 6, isDir: false}
         ]
 
+        function test_includeFiles() {
+            fileModel.includeFiles = false
+            wait(0)
+            compare(fileModel.count, 1)
+
+            fileModel.includeFiles = true
+            wait(0)
+            compare(fileModel.count, 4)
+        }
+
         function test_listing() {
             var check = function(indices, name) {
                 wait(0)
