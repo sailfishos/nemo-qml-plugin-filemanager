@@ -94,6 +94,7 @@ FileModel::FileModel(QObject *parent) :
     m_directorySort(SortDirectoriesWithFiles),
     m_sortOrder(Qt::AscendingOrder),
     m_caseSensitivity(Qt::CaseSensitive),
+    m_includeFiles(true),
     m_includeDirectories(true),
     m_includeParentDirectory(false),
     m_includeHiddenFiles(false),
@@ -248,6 +249,15 @@ void FileModel::setCaseSensitivity(Qt::CaseSensitivity sensitivity)
 
     m_caseSensitivity = sensitivity;
     scheduleUpdate(CaseSensitivityChanged | ContentChanged);
+}
+
+void FileModel::setIncludeFiles(bool include)
+{
+    if (m_includeFiles == include)
+        return;
+
+    m_includeFiles = include;
+    scheduleUpdate(IncludeFilesChanged | ContentChanged);
 }
 
 void FileModel::setIncludeDirectories(bool include)
@@ -549,7 +559,11 @@ QDir FileModel::directory() const
 {
     QDir dir(m_path);
     if (dir.exists()) {
-        QDir::Filters filters(QDir::Files | QDir::NoDot | QDir::System);
+        QDir::Filters filters(QDir::NoDot | QDir::System);
+
+        if (m_includeFiles) {
+            filters |= QDir::Files;
+        }
 
         if (m_includeDirectories) {
             filters |= QDir::AllDirs;
@@ -631,6 +645,9 @@ void FileModel::update()
     }
     if (m_changedFlags & CaseSensitivityChanged) {
         emit caseSensitivityChanged();
+    }
+    if (m_changedFlags & IncludeFilesChanged) {
+        emit includeFilesChanged();
     }
     if (m_changedFlags & IncludeDirectoriesChanged) {
         emit includeDirectoriesChanged();

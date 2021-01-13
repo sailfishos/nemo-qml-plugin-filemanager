@@ -63,6 +63,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
+    Q_PROPERTY(bool includeFiles READ includeFiles WRITE setIncludeFiles NOTIFY includeFilesChanged)
     Q_PROPERTY(bool includeDirectories READ includeDirectories WRITE setIncludeDirectories NOTIFY includeDirectoriesChanged)
     Q_PROPERTY(bool includeParentDirectory READ includeParentDirectory WRITE setIncludeParentDirectory NOTIFY includeParentDirectoryChanged)
     Q_PROPERTY(bool includeHiddenFiles READ includeHiddenFiles WRITE setIncludeHiddenFiles NOTIFY includeHiddenFilesChanged)
@@ -122,6 +123,9 @@ public:
     Qt::CaseSensitivity caseSensitivity() const { return m_caseSensitivity; }
     void setCaseSensitivity(Qt::CaseSensitivity sensitivity);
 
+    bool includeFiles() const { return m_includeFiles; }
+    void setIncludeFiles(bool include);
+
     bool includeDirectories() const { return m_includeDirectories; }
     void setIncludeDirectories(bool include);
 
@@ -174,6 +178,7 @@ signals:
     void sortByChanged();
     void sortOrderChanged();
     void caseSensitivityChanged();
+    void includeFilesChanged();
     void includeDirectoriesChanged();
     void includeParentDirectoryChanged();
     void includeHiddenFilesChanged();
@@ -195,17 +200,18 @@ public:
         SortByChanged                 = (1 << 1),
         SortOrderChanged              = (1 << 2),
         CaseSensitivityChanged        = (1 << 3),
-        IncludeDirectoriesChanged     = (1 << 4),
-        IncludeParentDirectoryChanged = (1 << 5),
-        IncludeHiddenFilesChanged     = (1 << 6),
-        IncludeSystemFilesChanged     = (1 << 7),
-        DirectorySortChanged          = (1 << 8),
-        NameFiltersChanged            = (1 << 9),
-        PopulatedChanged              = (1 << 10),
-        CountChanged                  = (1 << 11),
-        ActiveChanged                 = (1 << 12),
-        SelectedCountChanged          = (1 << 13),
-        ContentChanged                = (1 << 14),
+        IncludeFilesChanged           = (1 << 4),
+        IncludeDirectoriesChanged     = (1 << 5),
+        IncludeParentDirectoryChanged = (1 << 6),
+        IncludeHiddenFilesChanged     = (1 << 7),
+        IncludeSystemFilesChanged     = (1 << 8),
+        DirectorySortChanged          = (1 << 9),
+        NameFiltersChanged            = (1 << 10),
+        PopulatedChanged              = (1 << 11),
+        CountChanged                  = (1 << 12),
+        ActiveChanged                 = (1 << 13),
+        SelectedCountChanged          = (1 << 14),
+        ContentChanged                = (1 << 15),
     };
     Q_DECLARE_FLAGS(ChangedFlags, Changed)
 
@@ -230,6 +236,7 @@ private:
     DirectorySort m_directorySort;
     Qt::SortOrder m_sortOrder;
     Qt::CaseSensitivity m_caseSensitivity;
+    bool m_includeFiles;
     bool m_includeDirectories;
     bool m_includeParentDirectory;
     bool m_includeHiddenFiles;

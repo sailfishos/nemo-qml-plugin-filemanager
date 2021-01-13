@@ -240,6 +240,7 @@ Module {
         Property { name: "sortBy"; type: "Sort" }
         Property { name: "sortOrder"; type: "Qt::SortOrder" }
         Property { name: "caseSensitivity"; type: "Qt::CaseSensitivity" }
+        Property { name: "includeFiles"; type: "bool" }
         Property { name: "includeDirectories"; type: "bool" }
         Property { name: "includeParentDirectory"; type: "bool" }
         Property { name: "includeHiddenFiles"; type: "bool" }
