@@ -60,6 +60,7 @@ class FileModel : public QAbstractListModel
     Q_PROPERTY(QString absolutePath READ absolutePath NOTIFY pathChanged)
     Q_PROPERTY(QString directoryName READ directoryName NOTIFY pathChanged)
     Q_PROPERTY(QString parentDirectoryName READ parentDirectoryName NOTIFY pathChanged)
+    Q_PROPERTY(Error errorType READ errorType NOTIFY errorTypeChanged)
     Q_PROPERTY(Sort sortBy READ sortBy WRITE setSortBy NOTIFY sortByChanged)
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(Qt::CaseSensitivity caseSensitivity READ caseSensitivity WRITE setCaseSensitivity NOTIFY caseSensitivityChanged)
@@ -82,7 +83,8 @@ class FileModel : public QAbstractListModel
 public:
     enum Error {
         NoError,
-        ErrorReadNoPermissions
+        ErrorReadNoPermissions,
+        ErrorNotExist
     };
 
     enum Sort {
@@ -113,6 +115,9 @@ public:
     QString absolutePath() const { return m_absolutePath; }
     QString directoryName() const { return m_directory; }
     QString parentDirectoryName() const { return m_parentPath; }
+
+    Error errorType() const { return m_errorType; }
+    void setErrorType(Error type);
 
     Sort sortBy() const { return m_sortBy; }
     void setSortBy(Sort sortBy);
@@ -189,7 +194,7 @@ signals:
     void countChanged();
     void activeChanged();
     void selectedCountChanged();
-    void error(Error error, QString fileName);
+    void errorTypeChanged();
 
 private slots:
     void readDirectory();
@@ -232,6 +237,7 @@ private:
     QString m_absolutePath;
     QString m_directory;
     QString m_parentPath;
+    Error m_errorType;
     Sort m_sortBy;
     DirectorySort m_directorySort;
     Qt::SortOrder m_sortOrder;
