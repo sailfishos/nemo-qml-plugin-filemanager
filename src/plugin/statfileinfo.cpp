@@ -110,10 +110,12 @@ void StatFileInfo::refresh()
     m_extension = mimeDatabase.suffixForFileName(m_fileName);
     m_baseName = m_fileInfo.fileName();
 
-    if (m_baseName.lastIndexOf(m_extension) == 1) {
-        m_extension.clear();
-    } else {
-        m_baseName.chop(m_extension.length() + 1);
+    if (!m_extension.isEmpty()) {
+        if (m_baseName.lastIndexOf(m_extension) < 1) {
+            m_extension.clear();
+        } else {
+            m_baseName.chop(m_extension.length() + 1);
+        }
     }
 
     m_archiveInfo.setFile(m_fileName);

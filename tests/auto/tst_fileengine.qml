@@ -157,11 +157,13 @@ Item {
                 compare(fileModel.count, 2)
                 compare(repeater.itemAt(1).fileName, name)
 
+                fileCountSpy.clear()
+
                 // delete the folder
                 FileEngine.deleteFiles([ fileModel.fileNameAt(1) ], nonprivileged)
 
                 // wait for the deletion to finish
-                workerDoneSpy.wait()
+                fileCountSpy.wait()
                 wait(0)
                 compare(fileModel.count, 1)
             }
