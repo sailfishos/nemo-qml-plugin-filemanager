@@ -35,13 +35,10 @@ import QtQuick 2.0
 import Nemo.FileManager 1.0
 
 Item {
-    property int lastError
-
     FileModel {
         id: fileModel
         path: "folder"
         active: true
-        onError: lastError = error
     }
 
     Repeater {
@@ -175,11 +172,11 @@ Item {
         }
 
         function test_errors() {
-            compare(lastError, FileModel.NoError)
+            compare(fileModel.errorType, FileModel.NoError)
 
             fileModel.path = "hiddenfolder"
             wait(0)
-            compare(lastError, FileModel.ErrorReadNoPermissions)
+            compare(fileModel.errorType, FileModel.ErrorReadNoPermissions)
         }
     }
 }

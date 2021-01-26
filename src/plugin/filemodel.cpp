@@ -90,6 +90,7 @@ QVector<StatFileInfo> directoryEntries(const QDir &dir)
 
 FileModel::FileModel(QObject *parent) :
     QAbstractListModel(parent),
+    m_errorType(NoError),
     m_sortBy(SortByName),
     m_directorySort(SortDirectoriesWithFiles),
     m_sortOrder(Qt::AscendingOrder),
