@@ -324,6 +324,15 @@ void FileModel::setActive(bool active)
                             : ActiveChanged);
 }
 
+void FileModel::setErrorType(Error errorType)
+{
+    if (m_errorType == errorType)
+        return;
+
+    m_errorType = errorType;
+    emit errorTypeChanged();
+}
+
 QString FileModel::appendPath(QString pathName)
 {
     return QDir::cleanPath(QDir(m_path).absoluteFilePath(pathName));
@@ -469,15 +478,17 @@ void FileModel::readAllEntries()
     QDir dir(directory());
     if (!dir.exists()) {
         qmlInfo(this) << "Path " << dir.path() << " not found";
+        setErrorType(ErrorNotExist);
         return;
     }
 
     if (euidaccess(dir.path(), R_OK) == -1) {
         qmlInfo(this) << "No permissions to access " << dir.path();
-        emit error(ErrorReadNoPermissions, dir.path());
+        setErrorType(ErrorReadNoPermissions);
         return;
     }
 
+    setErrorType(NoError);
     m_absolutePath = dir.absolutePath();
     m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
     m_parentPath = dir.isRoot() ? QString() : QDir::cleanPath(dir.absoluteFilePath(QStringLiteral("..")));
@@ -494,7 +505,7 @@ void FileModel::refreshEntries()
         QDir dir(directory());
         if (!dir.exists()) {
             clearModel();
-
+            setErrorType(ErrorNotExist);
             qmlInfo(this) << "Path " << dir.path() << " not found";
             return;
         }
@@ -502,7 +513,7 @@ void FileModel::refreshEntries()
         if (euidaccess(dir.path(), R_OK) == -1) {
             clearModel();
             qmlInfo(this) << "No permissions to access " << dir.path();
-            emit error(ErrorReadNoPermissions, dir.path());
+            setErrorType(ErrorReadNoPermissions);
             return;
         }
 
@@ -515,6 +526,7 @@ void FileModel::refreshEntries()
 #endif
     }
 
+    setErrorType(NoError);
     recountSelectedFiles();
 
     if (m_files.count() != oldCount) {
