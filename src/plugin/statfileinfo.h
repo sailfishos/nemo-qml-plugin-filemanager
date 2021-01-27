@@ -35,6 +35,7 @@
 
 #include <QFileInfo>
 #include <QDateTime>
+#include <QMimeType>
 #include <QDir>
 #include <QUrl>
 #include <sys/stat.h>
@@ -55,7 +56,8 @@ public:
     void setFile(QString fileName);
     QString fileName() const { return m_fileInfo.fileName(); }
 
-    QString mimeType() const { return m_mimeType; }
+    QString mimeType() const { return m_mimeType.name(); }
+    QString mimeTypeComment() const { return m_mimeType.comment(); }
 
     // these inspect the file itself without following symlinks
 
@@ -136,7 +138,7 @@ private:
     QString m_fileName;
     QString m_baseName;
     QString m_extension;
-    QString m_mimeType;
+    QMimeType m_mimeType;
     QFileInfo m_fileInfo;
     Sailfish::ArchiveInfo m_archiveInfo;
     struct stat64 m_stat; // after following possible symlinks
@@ -154,6 +156,7 @@ class FileInfo : public QObject, protected StatFileInfo
     Q_PROPERTY(QString file READ file WRITE setFile NOTIFY fileChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
     Q_PROPERTY(QString mimeType READ mimeType NOTIFY fileChanged)
+    Q_PROPERTY(QString mimeTypeComment READ mimeTypeComment NOTIFY fileChanged)
     Q_PROPERTY(qint64 size READ size NOTIFY fileChanged)
     Q_PROPERTY(QDateTime lastModified READ lastModified NOTIFY fileChanged)
     Q_PROPERTY(bool isDir READ isDirAtEnd NOTIFY fileChanged)

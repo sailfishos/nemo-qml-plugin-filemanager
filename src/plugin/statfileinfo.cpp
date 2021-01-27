@@ -93,7 +93,7 @@ void StatFileInfo::refresh()
 
     m_fileInfo = QFileInfo(m_fileName);
     if (m_fileName.isEmpty()) {
-        m_mimeType = QString();
+        m_mimeType = QMimeType();
         m_baseName = QString();
         m_extension = QString();
 
@@ -106,7 +106,7 @@ void StatFileInfo::refresh()
     // no real cost to constructing one when needed.
     QMimeDatabase mimeDatabase;
 
-    m_mimeType = mimeDatabase.mimeTypeForFile(m_fileInfo).name();
+    m_mimeType = mimeDatabase.mimeTypeForFile(m_fileInfo);
     m_extension = mimeDatabase.suffixForFileName(m_fileName);
     m_baseName = m_fileInfo.fileName();
 
