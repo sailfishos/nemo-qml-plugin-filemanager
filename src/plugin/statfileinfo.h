@@ -36,6 +36,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QDir>
+#include <QUrl>
 #include <sys/stat.h>
 
 #include "archiveinfo.h"
@@ -149,6 +150,7 @@ bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs);
 class FileInfo : public QObject, protected StatFileInfo
 {
     Q_OBJECT
+    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QString file READ file WRITE setFile NOTIFY fileChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
     Q_PROPERTY(QString mimeType READ mimeType NOTIFY fileChanged)
@@ -163,14 +165,29 @@ class FileInfo : public QObject, protected StatFileInfo
     Q_PROPERTY(QDateTime accessed READ lastAccessed NOTIFY fileChanged)
     Q_PROPERTY(QString baseName READ baseName NOTIFY fileChanged)
     Q_PROPERTY(QString directoryPath READ absolutePath NOTIFY fileChanged)
+    Q_PROPERTY(bool exists READ exists NOTIFY fileChanged)
+    Q_PROPERTY(bool localFile READ isLocalFile NOTIFY localFileChanged)
 public:
     explicit FileInfo(QObject *parent = nullptr);
     ~FileInfo() override;
+
+    QUrl url() const;
+    void setUrl(const QUrl &url);
+
+    bool isLocalFile() const;
+
+    void setFile(const QString &file);
 
     Q_INVOKABLE void refresh() { StatFileInfo::refresh(); }
 
 signals:
     void fileChanged() override;
+    void urlChanged();
+    void localFileChanged();
+
+private:
+    QUrl m_url;
+    bool m_localFile = false;
 };
 
 #endif // STATFILEINFO_H
