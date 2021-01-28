@@ -93,7 +93,7 @@ void StatFileInfo::refresh()
 
     m_fileInfo = QFileInfo(m_fileName);
     if (m_fileName.isEmpty()) {
-        m_mimeType = QString();
+        m_mimeType = QMimeType();
         m_baseName = QString();
         m_extension = QString();
 
@@ -106,7 +106,7 @@ void StatFileInfo::refresh()
     // no real cost to constructing one when needed.
     QMimeDatabase mimeDatabase;
 
-    m_mimeType = mimeDatabase.mimeTypeForFile(m_fileInfo).name();
+    m_mimeType = mimeDatabase.mimeTypeForFile(m_fileInfo);
     m_extension = mimeDatabase.suffixForFileName(m_fileName);
     m_baseName = m_fileInfo.fileName();
 
@@ -163,4 +163,48 @@ FileInfo::FileInfo(QObject *parent)
 
 FileInfo::~FileInfo()
 {
+}
+
+QUrl FileInfo::url() const
+{
+    return m_url;
+}
+
+void FileInfo::setUrl(const QUrl &url)
+{
+    if (m_url != url) {
+        const bool wasLocal = m_localFile;
+
+        m_url = url;
+
+        if (!m_url.isEmpty() && m_url.isLocalFile()) {
+            m_localFile = true;
+
+            StatFileInfo::setFile(m_url.toLocalFile());
+        } else {
+            m_localFile = false;
+
+            StatFileInfo::setFile(QString());
+        }
+
+        if (m_localFile != wasLocal) {
+            emit localFileChanged();
+        }
+
+        emit urlChanged();
+    }
+}
+
+bool FileInfo::isLocalFile() const
+{
+    return m_localFile;
+}
+
+void FileInfo::setFile(const QString &file)
+{
+    if (file.isEmpty()) {
+        setUrl(QUrl());
+    } else {
+        setUrl(QUrl::fromLocalFile(file));
+    }
 }

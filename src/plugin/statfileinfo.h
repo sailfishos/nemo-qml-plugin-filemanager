@@ -35,7 +35,9 @@
 
 #include <QFileInfo>
 #include <QDateTime>
+#include <QMimeType>
 #include <QDir>
+#include <QUrl>
 #include <sys/stat.h>
 
 #include "archiveinfo.h"
@@ -54,7 +56,8 @@ public:
     void setFile(QString fileName);
     QString fileName() const { return m_fileInfo.fileName(); }
 
-    QString mimeType() const { return m_mimeType; }
+    QString mimeType() const { return m_mimeType.name(); }
+    QString mimeTypeComment() const { return m_mimeType.comment(); }
 
     // these inspect the file itself without following symlinks
 
@@ -135,7 +138,7 @@ private:
     QString m_fileName;
     QString m_baseName;
     QString m_extension;
-    QString m_mimeType;
+    QMimeType m_mimeType;
     QFileInfo m_fileInfo;
     Sailfish::ArchiveInfo m_archiveInfo;
     struct stat64 m_stat; // after following possible symlinks
@@ -149,9 +152,11 @@ bool operator!=(const StatFileInfo &lhs, const StatFileInfo &rhs);
 class FileInfo : public QObject, protected StatFileInfo
 {
     Q_OBJECT
+    Q_PROPERTY(QUrl url READ url WRITE setUrl NOTIFY urlChanged)
     Q_PROPERTY(QString file READ file WRITE setFile NOTIFY fileChanged)
     Q_PROPERTY(QString fileName READ fileName NOTIFY fileChanged)
     Q_PROPERTY(QString mimeType READ mimeType NOTIFY fileChanged)
+    Q_PROPERTY(QString mimeTypeComment READ mimeTypeComment NOTIFY fileChanged)
     Q_PROPERTY(qint64 size READ size NOTIFY fileChanged)
     Q_PROPERTY(QDateTime lastModified READ lastModified NOTIFY fileChanged)
     Q_PROPERTY(bool isDir READ isDirAtEnd NOTIFY fileChanged)
@@ -163,14 +168,29 @@ class FileInfo : public QObject, protected StatFileInfo
     Q_PROPERTY(QDateTime accessed READ lastAccessed NOTIFY fileChanged)
     Q_PROPERTY(QString baseName READ baseName NOTIFY fileChanged)
     Q_PROPERTY(QString directoryPath READ absolutePath NOTIFY fileChanged)
+    Q_PROPERTY(bool exists READ exists NOTIFY fileChanged)
+    Q_PROPERTY(bool localFile READ isLocalFile NOTIFY localFileChanged)
 public:
     explicit FileInfo(QObject *parent = nullptr);
     ~FileInfo() override;
+
+    QUrl url() const;
+    void setUrl(const QUrl &url);
+
+    bool isLocalFile() const;
+
+    void setFile(const QString &file);
 
     Q_INVOKABLE void refresh() { StatFileInfo::refresh(); }
 
 signals:
     void fileChanged() override;
+    void urlChanged();
+    void localFileChanged();
+
+private:
+    QUrl m_url;
+    bool m_localFile = false;
 };
 
 #endif // STATFILEINFO_H
