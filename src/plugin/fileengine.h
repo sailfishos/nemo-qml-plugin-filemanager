@@ -35,6 +35,7 @@
 
 #include <QDir>
 #include <QVariant>
+#include <QUrl>
 
 class FileWorker;
 
@@ -107,6 +108,9 @@ public:
                               bool othersRead, bool othersWrite, bool othersExecute, bool nonprivileged = false);
 
     Q_INVOKABLE QString extensionForFileName(const QString &fileName) const;
+
+    Q_INVOKABLE QString urlToPath(const QString &url);
+    Q_INVOKABLE QString pathToUrl(const QString &path);
 
 signals:
     void clipboardCountChanged();

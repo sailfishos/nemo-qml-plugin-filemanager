@@ -223,6 +223,16 @@ QString FileEngine::extensionForFileName(const QString &fileName) const
     return QMimeDatabase().suffixForFileName(fileName);
 }
 
+QString FileEngine::urlToPath(const QString &url)
+{
+    return QUrl(url).toLocalFile();
+}
+
+QString FileEngine::pathToUrl(const QString &path)
+{
+    return QUrl::fromLocalFile(path).toString();
+}
+
 void FileEngine::ensureWorker()
 {
     if (!m_fileWorker) {
