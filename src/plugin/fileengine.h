@@ -120,6 +120,8 @@ signals:
     void modeChanged();
 
 private:
+    void ensureWorker();
+
     QStringList m_clipboardFiles;
     bool m_clipboardContainsCopy;
     FileWorker *m_fileWorker;
