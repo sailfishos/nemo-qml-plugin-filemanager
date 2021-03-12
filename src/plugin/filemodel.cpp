@@ -37,6 +37,7 @@
 #include <QMimeType>
 #include <QQmlInfo>
 #include <QTimerEvent>
+#include <QUrl>
 
 #include <unistd.h>
 
@@ -56,7 +57,8 @@ enum {
     ExtensionRole,
     AbsolutePathRole,
     LastAccessedRole,
-    BaseNameRole
+    BaseNameRole,
+    UrlRole
 };
 
 int euidaccess(QString fileName, int how)
@@ -171,6 +173,9 @@ QVariant FileModel::data(const QModelIndex &index, int role) const
     case BaseNameRole:
         return info.baseName();
 
+    case UrlRole:
+        return QUrl::fromLocalFile(info.absoluteFilePath()).toString();
+
     default:
         return QVariant();
     }
@@ -193,6 +198,7 @@ QHash<int, QByteArray> FileModel::roleNames() const
     roles.insert(AbsolutePathRole, QByteArray("absolutePath"));
     roles.insert(LastAccessedRole, QByteArray("accessed"));
     roles.insert(BaseNameRole, QByteArray("baseName"));
+    roles.insert(UrlRole, QByteArray("url"));
     return roles;
 }
 
