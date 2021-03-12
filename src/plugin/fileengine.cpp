@@ -43,41 +43,33 @@
 
 FileEngine::FileEngine(QObject *parent) :
     QObject(parent),
-    m_clipboardContainsCopy(false)
+    m_clipboardContainsCopy(false),
+    m_fileWorker(nullptr)
 {
-    m_fileWorker = new FileWorker(this);
-
-    // pass worker end signals to QML
-    connect(m_fileWorker, &FileWorker::done, this, &FileEngine::workerDone);
-    connect(m_fileWorker, &FileWorker::cancelled, this, &FileEngine::cancelled);
-    connect(m_fileWorker, &FileWorker::error, this, &FileEngine::error);
-
-    connect(m_fileWorker, &FileWorker::started, this, &FileEngine::busyChanged);
-    connect(m_fileWorker, &FileWorker::finished, this, &FileEngine::busyChanged);
-    connect(m_fileWorker, &FileWorker::modeChanged, this, &FileEngine::modeChanged);
-
-    connect(m_fileWorker, &FileWorker::fileDeleted, this, &FileEngine::fileDeleted);
 }
 
 FileEngine::~FileEngine()
 {
-    // is this the way to force stop the worker thread?
-    m_fileWorker->cancel(); // stop possibly running background thread
-    m_fileWorker->wait();   // wait until thread stops
+    if (m_fileWorker) {
+        // is this the way to force stop the worker thread?
+        m_fileWorker->cancel(); // stop possibly running background thread
+        m_fileWorker->wait();   // wait until thread stops
+    }
 }
 
 FileEngine::Mode FileEngine::mode() const
 {
-    return m_fileWorker->mode();
+    return m_fileWorker ? m_fileWorker->mode() : IdleMode;
 }
 
 bool FileEngine::busy() const
 {
-    return m_fileWorker->isRunning();
+    return m_fileWorker && m_fileWorker->isRunning();
 }
 
 void FileEngine::deleteFiles(QStringList fileNames, bool nonprivileged)
 {
+    ensureWorker();
     m_fileWorker->startDeleteFiles(fileNames, nonprivileged);
 }
 
@@ -151,6 +143,8 @@ void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
     emit clipboardCountChanged();
     emit clipboardFilesChanged();
 
+    ensureWorker();
+
     if (m_clipboardContainsCopy) {
         m_fileWorker->startCopyFiles(files, destDirectory, nonprivileged);
         return;
@@ -161,7 +155,9 @@ void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
 
 void FileEngine::cancel()
 {
-    m_fileWorker->cancel();
+    if (m_fileWorker) {
+        m_fileWorker->cancel();
+    }
 }
 
 bool FileEngine::exists(QString fileName)
@@ -175,6 +171,8 @@ bool FileEngine::exists(QString fileName)
 
 bool FileEngine::mkdir(QString path, QString name, bool nonprivileged)
 {
+    ensureWorker();
+
     if (!m_fileWorker->mkdir(path, name, nonprivileged)) {
         emit error(ErrorFolderCreationFailed, name);
         return false;
@@ -184,6 +182,8 @@ bool FileEngine::mkdir(QString path, QString name, bool nonprivileged)
 
 bool FileEngine::rename(QString fullOldFileName, QString newName, bool nonprivileged)
 {
+    ensureWorker();
+
     QFileInfo fileInfo(fullOldFileName);
     QDir dir = fileInfo.absoluteDir();
     QString fullNewFileName = dir.absoluteFilePath(newName);
@@ -199,6 +199,8 @@ bool FileEngine::chmod(QString path,
                       bool groupRead, bool groupWrite, bool groupExecute,
                       bool othersRead, bool othersWrite, bool othersExecute, bool nonprivileged)
 {
+    ensureWorker();
+
     QFileDevice::Permissions p;
     if (ownerRead) p |= QFileDevice::ReadOwner;
     if (ownerWrite) p |= QFileDevice::WriteOwner;
@@ -219,4 +221,31 @@ bool FileEngine::chmod(QString path,
 QString FileEngine::extensionForFileName(const QString &fileName) const
 {
     return QMimeDatabase().suffixForFileName(fileName);
+}
+
+QString FileEngine::urlToPath(const QString &url)
+{
+    return QUrl(url).toLocalFile();
+}
+
+QString FileEngine::pathToUrl(const QString &path)
+{
+    return QUrl::fromLocalFile(path).toString();
+}
+
+void FileEngine::ensureWorker()
+{
+    if (!m_fileWorker) {
+        m_fileWorker = new FileWorker(this);
+        // pass worker end signals to QML
+        connect(m_fileWorker, &FileWorker::done, this, &FileEngine::workerDone);
+        connect(m_fileWorker, &FileWorker::cancelled, this, &FileEngine::cancelled);
+        connect(m_fileWorker, &FileWorker::error, this, &FileEngine::error);
+
+        connect(m_fileWorker, &FileWorker::started, this, &FileEngine::busyChanged);
+        connect(m_fileWorker, &FileWorker::finished, this, &FileEngine::busyChanged);
+        connect(m_fileWorker, &FileWorker::modeChanged, this, &FileEngine::modeChanged);
+
+        connect(m_fileWorker, &FileWorker::fileDeleted, this, &FileEngine::fileDeleted);
+    }
 }

@@ -35,6 +35,7 @@
 
 #include <QDir>
 #include <QVariant>
+#include <QUrl>
 
 class FileWorker;
 
@@ -108,6 +109,9 @@ public:
 
     Q_INVOKABLE QString extensionForFileName(const QString &fileName) const;
 
+    Q_INVOKABLE QString urlToPath(const QString &url);
+    Q_INVOKABLE QString pathToUrl(const QString &path);
+
 signals:
     void clipboardCountChanged();
     void clipboardFilesChanged();
@@ -120,6 +124,8 @@ signals:
     void modeChanged();
 
 private:
+    void ensureWorker();
+
     QStringList m_clipboardFiles;
     bool m_clipboardContainsCopy;
     FileWorker *m_fileWorker;
