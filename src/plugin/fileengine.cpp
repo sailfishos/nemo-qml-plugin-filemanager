@@ -118,6 +118,11 @@ void FileEngine::pasteFiles(QString destDirectory, bool nonprivileged)
     }
 
     foreach (QString fileName, files) {
+        if (!exists(fileName)) {
+            emit error(ErrorCopyFailed, fileName);
+            return;
+        }
+
         QFileInfo fileInfo(fileName);
         QString newName = dest.absoluteFilePath(fileInfo.fileName());
 
