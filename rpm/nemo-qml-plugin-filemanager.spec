@@ -3,7 +3,7 @@ Summary:    File manager plugin for Nemo Mobile
 Version:    0.1.34
 Release:    1
 License:    BSD
-URL:        https://git.sailfishos.org/mer-core/nemo-qml-plugin-filemanager
+URL:        https://github.com/sailfishos/nemo-qml-plugin-filemanager
 Source0:    %{name}-%{version}.tar.bz2
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -52,6 +52,7 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.BSD
 %{_libdir}/qt5/qml/Nemo/FileManager
 %{_libdir}/libfilemanager.so.*
 %{_bindir}/fileoperationsd
