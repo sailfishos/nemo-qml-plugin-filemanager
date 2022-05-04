@@ -38,8 +38,11 @@
 #include <QJSValue>
 #include <QScopedPointer>
 #include <QDir>
+#include <QLoggingCategory>
 
 #include <filemanagerglobal.h>
+
+Q_DECLARE_LOGGING_CATEGORY(diskUsage)
 
 class DiskUsagePrivate;
 

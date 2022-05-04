@@ -59,13 +59,17 @@ signals:
 
 private:
     QVariantMap calculate(QStringList paths);
-    quint64 calculateSize(QString directory, QString *expandedPath, bool androidHomeExists);
+    quint64 calculateSize(QString directory, QString *expandedPath = nullptr);
     quint64 calculateRpmSize(const QString &glob);
     quint64 calculateApkdSize(const QString &rest);
     int counting(const QString &path, DiskUsage::Filter filter, bool recursive);
 
     bool m_quit;
     bool m_stopCounting;
+    bool m_apkd_data_queried = false;
+    qulonglong m_apkd_app = 0;
+    qulonglong m_apkd_data = 0;
+    qulonglong m_apkd_run = 0;
 
     friend class Ut_DiskUsage;
 };

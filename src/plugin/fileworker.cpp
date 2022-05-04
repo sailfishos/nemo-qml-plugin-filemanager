@@ -32,6 +32,7 @@
 
 #include "fileworker.h"
 #include "fileoperations.h"
+#include "diskusage.h"
 
 #include <QQmlInfo>
 #include <QCoreApplication>
@@ -149,7 +150,7 @@ bool FileWorker::mkdir(QString path, QString name, bool nonprivileged)
     QDBusPendingReply<uint> reply = m_proxy.Mkdir(name, path);
     reply.waitForFinished();
     if (reply.isError()) {
-        qWarning() << "Error waiting for file operation reply";
+        qCWarning(diskUsage) << "Error waiting for file operation reply";
         return false;
     }
 
@@ -165,7 +166,7 @@ bool FileWorker::rename(QString oldPath, QString newPath, bool nonprivileged)
     QDBusPendingReply<uint> reply = m_proxy.Rename(oldPath, newPath);
     reply.waitForFinished();
     if (reply.isError()) {
-        qWarning() << "Error waiting for file operation reply";
+        qCWarning(diskUsage) << "Error waiting for file operation reply";
         return false;
     }
 
@@ -181,7 +182,7 @@ bool FileWorker::setPermissions(QString path, QFileDevice::Permissions p, bool n
     QDBusPendingReply<uint> reply = m_proxy.SetPermissions(path, static_cast<unsigned>(p));
     reply.waitForFinished();
     if (reply.isError()) {
-        qWarning() << "Error waiting for file operation reply";
+        qCWarning(diskUsage) << "Error waiting for file operation reply";
         return false;
     }
 
@@ -223,7 +224,7 @@ void FileWorker::startOperation(bool nonprivileged)
     }
     
     if (reply.isError()) {
-        qWarning() << "Uanble to invoke remote file operation:" << reply.error().message();
+        qCWarning(diskUsage) << "Uanble to invoke remote file operation:" << reply.error().message();
     } else {
         if (reply.isFinished()) {
             m_operation = reply.value();
@@ -255,7 +256,7 @@ void FileWorker::fileOperationFailed(unsigned id, const QStringList &paths, unsi
             emit error(result, fileName);
         }
     } else if (m_operation != 0) {
-        qWarning() << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
+        qCWarning(diskUsage) << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
     }
 }
 
@@ -267,7 +268,7 @@ void FileWorker::fileOperationSucceeded(unsigned id, const QStringList &paths)
                 emit fileDeleted(path);
         }
     } else if (m_operation != 0) {
-        qWarning() << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
+        qCWarning(diskUsage) << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
     }
 }
 
@@ -278,7 +279,7 @@ void FileWorker::operationFinished(unsigned id)
 
         emit done();
     } else if (m_operation != 0) {
-        qWarning() << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
+        qCWarning(diskUsage) << Q_FUNC_INFO << "Unknown operation:" << id << "!=" << m_operation;
     }
 }
 
