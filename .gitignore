@@ -18,3 +18,9 @@ moc_*
 *.so
 *.so.*
 *.qm
+filemanager.pc
+fileoperationsadaptor.*
+fileoperationsproxy.*
+fileoperationsd
+ut_diskusage
+tests.xml
