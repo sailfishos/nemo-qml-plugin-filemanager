@@ -39,6 +39,8 @@
 #include <QDir>
 #include <QDirIterator>
 
+Q_LOGGING_CATEGORY(diskUsage, "org.sailfishos.diskusage", QtWarningMsg)
+
 DiskUsageWorker::DiskUsageWorker(QObject *parent)
     : QObject(parent)
     , m_quit(false)
@@ -89,10 +91,6 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
     QMap<QString, QString> expandedPaths; // input path -> expanded path
     QMap<QString, QString> originalPaths; // expanded path -> input path
 
-    // Older adaptations (e.g. Jolla 1) don't have /home/.android/. Android home is in the root.
-    QString androidHome = QString("/home/.android");
-    bool androidHomeExists = QDir(androidHome).exists();
-
     foreach (const QString &path, paths) {
         QString expandedPath;
         // Pseudo-path for querying RPM database for file sizes
@@ -107,17 +105,19 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
             // Pseudo-path for querying Android apps' data usage
             QString rest = path.mid(6);
             usage[path] = calculateApkdSize(rest);
-            expandedPath = (androidHomeExists ? androidHome : "") + "/data/data";
-        } else {
-            quint64 size = calculateSize(path, &expandedPath, androidHomeExists);
-            if (expandedPath.startsWith(androidHome) && !androidHomeExists) {
-                expandedPath = expandedPath.mid(androidHome.length());
+            if (rest == "runtime") {
+                expandedPath = "/opt/alien";
+            } else {
+                expandedPath = "/home/.android/data/" + rest;
             }
+        } else {
+            quint64 size = calculateSize(path, &expandedPath);
             usage[path] = size;
         }
 
         expandedPaths[path] = expandedPath;
         originalPaths[expandedPath] = path;
+        qCDebug(diskUsage) << "Counted" << path << "as" << expandedPath << ":" << usage[path];
         if (m_quit) {
             break;
         }

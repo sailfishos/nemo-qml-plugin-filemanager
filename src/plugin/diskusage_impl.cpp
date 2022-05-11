@@ -37,20 +37,16 @@
 #include <QProcess>
 #include <QDebug>
 #include <QDBusConnection>
-#include <QDBusMessage>
+#include <QDBusInterface>
 #include <QDBusReply>
+#include <QDBusArgument>
 #include <QStorageInfo>
 
-quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath, bool androidHomeExists)
+quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath)
 {
     // In lieu of wordexp(3) support in Qt, fake it
     if (directory.startsWith("~/")) {
         directory = QDir::homePath() + '/' + directory.mid(2);
-    }
-
-    QString androidHome = QString("/home/.android");
-    if (!androidHomeExists && directory.startsWith(androidHome)) {
-        directory = directory.mid(androidHome.length());
     }
 
     if (expandedPath) {
@@ -70,7 +66,7 @@ quint64 DiskUsageWorker::calculateSize(QString directory, QString *expandedPath,
     du.start("du", QStringList() << "-skx" << directory, QIODevice::ReadOnly);
     du.waitForFinished();
     if (du.exitStatus() != QProcess::NormalExit) {
-        qWarning() << "Could not determine size of:" << directory;
+        qCWarning(diskUsage) << "Could not determine size of:" << directory;
         return 0L;
     }
     QStringList size_directory = QString::fromUtf8(du.readAll()).split('\t');
@@ -88,7 +84,7 @@ quint64 DiskUsageWorker::calculateRpmSize(const QString &glob)
     rpm.start("rpm", QStringList() << "-qa" << "--queryformat=%{name}|%{size}\\n" << glob, QIODevice::ReadOnly);
     rpm.waitForFinished();
     if (rpm.exitStatus() != QProcess::NormalExit) {
-        qWarning() << "Could not determine size of RPM packages matching:" << glob;
+        qCWarning(diskUsage) << "Could not determine size of RPM packages matching:" << glob;
         return 0L;
     }
 
@@ -98,7 +94,7 @@ quint64 DiskUsageWorker::calculateRpmSize(const QString &glob)
     foreach (const QString &line, lines) {
         int index = line.indexOf('|');
         if (index == -1) {
-            qWarning() << "Could not parse RPM output line:" << line;
+            qCWarning(diskUsage) << "Could not parse RPM output line:" << line;
             continue;
         }
 
@@ -111,15 +107,48 @@ quint64 DiskUsageWorker::calculateRpmSize(const QString &glob)
 
 quint64 DiskUsageWorker::calculateApkdSize(const QString &rest)
 {
-    Q_UNUSED(rest)
-    QDBusMessage msg = QDBusMessage::createMethodCall("com.jolla.apkd",
-            "/com/jolla/apkd", "com.jolla.apkd", "getAndroidAppDataUsage");
-
-    QDBusReply<qulonglong> reply = QDBusConnection::systemBus().call(msg);
-    if (reply.isValid()) {
-        return quint64(reply.value());
+    if (!m_apkd_data_queried) {
+        qCDebug(diskUsage) << "Querying apkd for Android app data usage";
+        QDBusInterface apkd("com.jolla.apkd", "/com/jolla/apkd", "com.jolla.apkd", QDBusConnection::sessionBus());
+        QDBusReply<QDBusArgument> reply = apkd.call("getAndroidAppDataUsage");
+        if (reply.isValid()) {
+            int apkd_cache = 0;
+            const QDBusArgument output = reply.value();
+            output.beginStructure();
+            output >> m_apkd_app;
+            output >> m_apkd_data;
+            output >> apkd_cache;
+            // TODO: Add an 'Android app cache' category, and report this separately.
+            // But for now add this to the data count
+            m_apkd_data += apkd_cache;
+            output.endStructure();
+            m_apkd_run = calculateSize("/opt/alien");
+        } else {
+            qCDebug(diskUsage) << "Android app data usage query failed. Falling back to Alien4 API";
+            QDBusInterface apkd4("com.jolla.apkd", "/com/jolla/apkd", "com.jolla.apkd", QDBusConnection::systemBus());
+            QDBusReply<qulonglong> reply4 = apkd4.call("getAndroidAppDataUsage");
+            if (reply4.isValid()) {
+                m_apkd_data = reply4.value();
+            } else {
+                qCWarning(diskUsage) << "Could not query Android app data usage";
+            }
+            m_apkd_app = calculateSize("/home/.android/data/app");
+            // NOTE: We can not use /opt/alien/ as there is lots of bind mounts
+            // there that mess up the calculations, also the amount of data outside 
+            // system dir is not making much difference.
+            m_apkd_run = calculateSize("/opt/alien/system");
+        }
+        m_apkd_data_queried = true;
     }
 
-    qWarning() << "Could not determine Android app data usage";
-    return 0L;
+    if (rest == "app") {
+        return m_apkd_app;
+    } else if (rest == "data") {
+        return m_apkd_data;
+    } else if (rest == "runtime") {
+        return m_apkd_run;
+    } else {
+        qCWarning(diskUsage) << "Unknown Android usage type: " << rest;
+        return 0L;
+    }
 }
