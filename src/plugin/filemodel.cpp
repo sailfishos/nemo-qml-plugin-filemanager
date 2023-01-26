@@ -39,7 +39,9 @@
 #include <QTimerEvent>
 #include <QUrl>
 
+#include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
 
 namespace {
 
@@ -61,11 +63,16 @@ enum {
     UrlRole
 };
 
-int euidaccess(QString fileName, int how)
+bool isDirAccessible(QString fileName)
 {
     QByteArray fab = fileName.toUtf8();
     char *fn = fab.data();
-    return ::euidaccess(fn, how);
+    DIR *dir = opendir(fn);
+    if (dir) {
+        closedir(dir);
+        return true;
+    }
+    return false;
 }
 
 QVector<StatFileInfo> directoryEntries(const QDir &dir)
@@ -489,7 +496,7 @@ void FileModel::readAllEntries()
         return;
     }
 
-    if (euidaccess(dir.path(), R_OK) == -1) {
+    if (!isDirAccessible(dir.path())) {
         qmlInfo(this) << "No permissions to access " << dir.path();
         setErrorType(ErrorReadNoPermissions);
         return;
@@ -517,7 +524,7 @@ void FileModel::refreshEntries()
             return;
         }
 
-        if (euidaccess(dir.path(), R_OK) == -1) {
+        if (!isDirAccessible(dir.path())) {
             clearModel();
             qmlInfo(this) << "No permissions to access " << dir.path();
             setErrorType(ErrorReadNoPermissions);
