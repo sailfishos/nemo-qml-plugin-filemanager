@@ -69,7 +69,7 @@ Item {
             {fileName: "c", baseName: "c", extension: "", mimeType: "text/plain", size: 4, isDir: false},
             {fileName: "subfolder", baseName: "subfolder", extension: "", mimeType: "inode/directory", size: 4096, isDir: true},
             {fileName: ".hidden.xml", baseName: ".hidden", extension: "xml", mimeType: "application/xml", size: 52, isDir: false},
-            {fileName: ".tarball.tar.bz2", baseName: ".tarball", extension: "tar.bz2", mimeType: "application/x-bzip-compressed-tar", size: 109, isDir: false},
+            {fileName: ".tarball.tar.bz2", baseName: ".tarball", extension: "tar.bz2", mimeType: "application/x-bzip2-compressed-tar", size: 109, isDir: false},
             {fileName: ".hidden", baseName: ".hidden", extension: "", mimeType: "text/plain", size: 6, isDir: false}
         ]
 
