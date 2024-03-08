@@ -9,12 +9,12 @@ SOURCES += \
     plugin/diskusage_impl.cpp
 
 PUBLIC_HEADERS = \
-    plugin/diskusage.h
+    plugin/diskusage.h \
+    plugin/filemanagerglobal.h
 
 HEADERS += \
     $$PUBLIC_HEADERS \
     plugin/diskusage_p.h \
-    plugin/filemanagerglobal.h
 
 DEFINES += \
     FILEMANAGER_BUILD_LIBRARY
