@@ -1,7 +1,7 @@
 TEMPLATE = lib
 TARGET = filemanager
 
-CONFIG += qt create_pc create_prl no_install_prl c++11
+CONFIG += qt create_pc create_prl no_install_prl
 QT = qml core dbus
 
 SOURCES += \

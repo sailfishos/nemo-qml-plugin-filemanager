@@ -35,10 +35,6 @@
 
 #include "statfileinfo.h"
 
-#ifndef DESKTOP
-#include <synchronizelists.h>
-#endif
-
 #include <QAbstractListModel>
 #include <QBasicTimer>
 #include <QDir>
