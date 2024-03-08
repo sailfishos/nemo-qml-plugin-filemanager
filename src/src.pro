@@ -33,7 +33,7 @@ QMAKE_PKGCONFIG_DESCRIPTION = Filemanager application development files
 QMAKE_PKGCONFIG_LIBDIR = $$target.path
 QMAKE_PKGCONFIG_INCDIR = $$develheaders.path
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
-QMAKE_PKGCONFIG_REQUIRES = Qt5Core Qt5DBus profile nemomodels-qt5 libsailfishkeyprovider connman-qt5
+QMAKE_PKGCONFIG_REQUIRES = Qt5Core Qt5Qml
 
 INSTALLS += target develheaders pkgconfig
 
