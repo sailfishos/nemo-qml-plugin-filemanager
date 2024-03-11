@@ -39,6 +39,10 @@
 #include <QTimerEvent>
 #include <QUrl>
 
+#ifndef DESKTOP
+#include "synchronizelists.h"
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>

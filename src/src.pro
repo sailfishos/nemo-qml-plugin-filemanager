@@ -1,7 +1,7 @@
 TEMPLATE = lib
 TARGET = filemanager
 
-CONFIG += qt create_pc create_prl no_install_prl c++11
+CONFIG += qt create_pc create_prl no_install_prl
 QT = qml core dbus
 
 SOURCES += \
@@ -9,12 +9,12 @@ SOURCES += \
     plugin/diskusage_impl.cpp
 
 PUBLIC_HEADERS = \
-    plugin/diskusage.h
+    plugin/diskusage.h \
+    plugin/filemanagerglobal.h
 
 HEADERS += \
     $$PUBLIC_HEADERS \
     plugin/diskusage_p.h \
-    plugin/filemanagerglobal.h
 
 DEFINES += \
     FILEMANAGER_BUILD_LIBRARY
@@ -33,7 +33,7 @@ QMAKE_PKGCONFIG_DESCRIPTION = Filemanager application development files
 QMAKE_PKGCONFIG_LIBDIR = $$target.path
 QMAKE_PKGCONFIG_INCDIR = $$develheaders.path
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
-QMAKE_PKGCONFIG_REQUIRES = Qt5Core Qt5DBus profile nemomodels-qt5 libsailfishkeyprovider connman-qt5
+QMAKE_PKGCONFIG_REQUIRES = Qt5Core Qt5Qml
 
 INSTALLS += target develheaders pkgconfig
 

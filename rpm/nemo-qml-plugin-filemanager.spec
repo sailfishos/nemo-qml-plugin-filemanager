@@ -12,7 +12,6 @@ BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Test)
-BuildRequires:  pkgconfig(contactcache-qt5)
 BuildRequires:  pkgconfig(qt5-boostable)
 BuildRequires:  pkgconfig(KF5Archive)
 

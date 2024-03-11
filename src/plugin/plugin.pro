@@ -2,7 +2,7 @@ TARGET = nemofilemanager
 PLUGIN_IMPORT_PATH = Nemo/FileManager
 
 TEMPLATE = lib
-CONFIG += qt plugin hide_symbols c++11
+CONFIG += qt plugin hide_symbols
 QT = \
     core \
     concurrent \
@@ -13,15 +13,13 @@ CONFIG += link_pkgconfig
 
 contains(CONFIG, desktop) {
     DEFINES *= DESKTOP
-} else {
-    PKGCONFIG += contactcache-qt5
 }
 
 QMAKE_CXXFLAGS += -Wparentheses -Werror -Wfatal-errors
 
 PKGCONFIG += KF5Archive
 
-# Drop any library linkage we dont actually need (such as contactcache-qt5)
+# Drop any library linkage we dont actually need
 QMAKE_LFLAGS *= -Wl,--as-needed
 
 target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
