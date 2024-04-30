@@ -57,7 +57,6 @@ class FILEMANAGER_EXPORT DiskUsage: public QObject
     Q_PROPERTY(QVariantMap result READ result NOTIFY resultChanged)
     Q_PROPERTY(Status status READ status WRITE setStatus NOTIFY statusChanged)
 
-
 public:
     explicit DiskUsage(QObject *parent = nullptr);
     virtual ~DiskUsage();
@@ -93,7 +92,7 @@ signals:
 
 private slots:
     void finished(QVariantMap usage, QJSValue *callback);
-    void countingFinished(const int &counter, QJSValue *callback);
+    void countingFinished(int counter, QJSValue *callback);
 
 private:
     bool working() const;

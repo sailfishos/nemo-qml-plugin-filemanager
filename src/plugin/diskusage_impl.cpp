@@ -99,7 +99,7 @@ quint64 DiskUsageWorker::calculateRpmSize(const QString &glob)
         }
 
         QString package = line.left(index);
-        result += line.mid(index+1).toULongLong();
+        result += line.mid(index + 1).toULongLong();
     }
 
     return result;

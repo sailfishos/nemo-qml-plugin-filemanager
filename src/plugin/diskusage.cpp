@@ -265,7 +265,10 @@ void DiskUsage::fileCount(const QString &path, QJSValue callback, DiskUsage::Fil
 void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
 {
     if (callback) {
-        callback->call(QJSValueList() << callback->engine()->toScriptValue(usage));
+        QJSValue result = callback->call(QJSValueList() << callback->engine()->toScriptValue(usage));
+        if (result.isError()) {
+            qCWarning(diskUsage) << "Error on diskusage callback" << result.toString();
+        }
         delete callback;
     }
 
@@ -278,27 +281,33 @@ void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
     setWorking(false);
 }
 
-void DiskUsage::countingFinished(const int &counter, QJSValue *callback)
+void DiskUsage::countingFinished(int counter, QJSValue *callback)
 {
     if (callback) {
-        callback->call(QJSValueList() << callback->engine()->toScriptValue(counter));
+        QJSValue result = callback->call(QJSValueList() << callback->engine()->toScriptValue(counter));
+        if (result.isError()) {
+            qCWarning(diskUsage) << "Error on diskusage callback" << result.toString();
+        }
         delete callback;
     }
 
     setStatus(DiskUsage::Idle);
 }
 
-bool DiskUsage::working() const {
+bool DiskUsage::working() const
+{
     Q_D(const DiskUsage);
     return d->m_working;
 }
 
-DiskUsage::Status DiskUsage::status() const {
+DiskUsage::Status DiskUsage::status() const
+{
     Q_D(const DiskUsage);
     return d->m_status;
 }
 
-void DiskUsage::setWorking(bool working) {
+void DiskUsage::setWorking(bool working)
+{
     Q_D(DiskUsage);
     if (d->m_working != working) {
         d->m_working = working;

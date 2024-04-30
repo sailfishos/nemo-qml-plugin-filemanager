@@ -37,10 +37,9 @@ Requires:   %{name} = %{version}-%{release}
 
 %build
 %qmake5 "VERSION=%{version}"
-make %{?_smp_mflags}
+%make_build
 
 %install
-rm -rf %{buildroot}
 %qmake5_install
 chmod o+w -R %{buildroot}/%{_libdir}/%{name}-tests/auto/folder
 chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
@@ -50,7 +49,6 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %license LICENSE.BSD
 %{_libdir}/qt5/qml/Nemo/FileManager
 %{_libdir}/libfilemanager.so.*
@@ -59,13 +57,11 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 %{_datadir}/dbus-1/interfaces/org.nemomobile.FileOperations.xml
 
 %files devel
-%defattr(-,root,root,-)
 %{_libdir}/pkgconfig/filemanager.pc
 %{_includedir}/filemanager
 %{_libdir}/libfilemanager.so
 
 %files tests
-%defattr(-,root,root,-)
 %{_libdir}/%{name}-tests
 %{_datadir}/%{name}-tests/tests.xml
 
