@@ -122,21 +122,7 @@ quint64 DiskUsageWorker::calculateApkdSize(const QString &rest)
             // But for now add this to the data count
             m_apkd_data += apkd_cache;
             output.endStructure();
-            m_apkd_run = calculateSize("/opt/alien");
-        } else {
-            qCDebug(diskUsage) << "Android app data usage query failed. Falling back to Alien4 API";
-            QDBusInterface apkd4("com.jolla.apkd", "/com/jolla/apkd", "com.jolla.apkd", QDBusConnection::systemBus());
-            QDBusReply<qulonglong> reply4 = apkd4.call("getAndroidAppDataUsage");
-            if (reply4.isValid()) {
-                m_apkd_data = reply4.value();
-            } else {
-                qCWarning(diskUsage) << "Could not query Android app data usage";
-            }
-            m_apkd_app = calculateSize("/home/.android/data/app");
-            // NOTE: We can not use /opt/alien/ as there is lots of bind mounts
-            // there that mess up the calculations, also the amount of data outside 
-            // system dir is not making much difference.
-            m_apkd_run = calculateSize("/opt/alien/system");
+            m_apkd_run = calculateSize("/opt/appsupport");
         }
         m_apkd_data_queried = true;
     }
