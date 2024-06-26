@@ -106,9 +106,9 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
             QString rest = path.mid(6);
             usage[path] = calculateApkdSize(rest);
             if (rest == "runtime") {
-                expandedPath = "/opt/alien";
+                expandedPath = "/opt/appsupport";
             } else {
-                expandedPath = "/home/.android/data/" + rest;
+                expandedPath = "/home/.appsupport/" + rest;
             }
         } else {
             quint64 size = calculateSize(path, &expandedPath);
