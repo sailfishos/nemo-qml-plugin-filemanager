@@ -194,6 +194,7 @@ signals:
 
 private slots:
     void readDirectory();
+    void scheduleContentChange();
 
 public:
     enum Changed {
