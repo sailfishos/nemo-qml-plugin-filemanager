@@ -34,14 +34,14 @@
 
 #include <QMimeDatabase>
 
-StatFileInfo::StatFileInfo() :
-    m_selected(false)
+StatFileInfo::StatFileInfo()
+    : m_selected(false)
 {
     refresh();
 }
 
-StatFileInfo::StatFileInfo(QString fileName) :
-    m_fileName(fileName), m_selected(false)
+StatFileInfo::StatFileInfo(QString fileName)
+    : m_fileName(fileName), m_selected(false)
 {
     refresh();
 }

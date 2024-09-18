@@ -101,26 +101,26 @@ QVector<StatFileInfo> directoryEntries(const QDir &dir)
 
 }
 
-FileModel::FileModel(QObject *parent) :
-    QAbstractListModel(parent),
-    m_errorType(NoError),
-    m_sortBy(SortByName),
-    m_directorySort(SortDirectoriesWithFiles),
-    m_sortOrder(Qt::AscendingOrder),
-    m_caseSensitivity(Qt::CaseSensitive),
-    m_includeFiles(true),
-    m_includeDirectories(true),
-    m_includeParentDirectory(false),
-    m_includeHiddenFiles(false),
-    m_includeSystemFiles(false),
-    m_active(false),
-    m_dirty(false),
-    m_populated(false),
-    m_selectedCount(0)
+FileModel::FileModel(QObject *parent)
+    : QAbstractListModel(parent)
+    , m_errorType(NoError)
+    , m_sortBy(SortByName)
+    , m_directorySort(SortDirectoriesWithFiles)
+    , m_sortOrder(Qt::AscendingOrder)
+    , m_caseSensitivity(Qt::CaseSensitive)
+    , m_includeFiles(true)
+    , m_includeDirectories(true)
+    , m_includeParentDirectory(false)
+    , m_includeHiddenFiles(false)
+    , m_includeSystemFiles(false)
+    , m_active(false)
+    , m_dirty(false)
+    , m_populated(false)
+    , m_selectedCount(0)
 {
     m_watcher = new QFileSystemWatcher(this);
-    connect(m_watcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(refresh()));
-    connect(m_watcher, SIGNAL(fileChanged(const QString&)), this, SLOT(refresh()));
+    connect(m_watcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(scheduleContentChange()));
+    connect(m_watcher, SIGNAL(fileChanged(const QString&)), this, SLOT(scheduleContentChange()));
 }
 
 FileModel::~FileModel()
@@ -232,8 +232,13 @@ void FileModel::setPath(QString path)
     if (!m_path.isEmpty())
         m_watcher->removePath(m_path);
 
-    if (!path.isEmpty())
-        m_watcher->addPath(path);
+    if (!path.isEmpty()) {
+        if (QFile::exists(path)) {
+            m_watcher->addPath(path);
+        } else {
+            qWarning() << "Path of FileModel doesn't exist";
+        }
+    }
 
     m_path = path;
     m_absolutePath = QString();
@@ -439,16 +444,19 @@ QStringList FileModel::selectedFiles() const
 
 void FileModel::refresh()
 {
-    if (!m_active) {
-        m_dirty = true;
-        return;
+    if (m_watcher->directories().isEmpty() && m_watcher->files().isEmpty() && !m_path.isEmpty()) {
+        m_watcher->addPath(m_path);
     }
 
-    scheduleUpdate(ContentChanged);
+    scheduleContentChange();
 }
 
 void FileModel::refreshFull()
 {
+    if (m_watcher->directories().isEmpty() && m_watcher->files().isEmpty() && !m_path.isEmpty()) {
+        m_watcher->addPath(m_path);
+    }
+
     if (!m_active) {
         m_dirty = true;
         return;
@@ -458,7 +466,18 @@ void FileModel::refreshFull()
         m_populated = false;
         emit populatedChanged();
     }
+
     scheduleUpdate();
+}
+
+void FileModel::scheduleContentChange()
+{
+    if (!m_active) {
+        m_dirty = true;
+        return;
+    }
+
+    scheduleUpdate(ContentChanged);
 }
 
 void FileModel::readDirectory()
