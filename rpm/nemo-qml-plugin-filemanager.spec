@@ -41,8 +41,8 @@ Requires:   %{name} = %{version}-%{release}
 
 %install
 %qmake5_install
-chmod o+w -R %{buildroot}/%{_libdir}/%{name}-tests/auto/folder
-chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
+chmod o+w -R %{buildroot}/opt/tests/%{name}/auto/folder
+chmod o-r -R %{buildroot}/opt/tests/%{name}/auto/hiddenfolder
 
 %post -p /sbin/ldconfig
 
@@ -62,6 +62,6 @@ chmod o-r -R %{buildroot}/%{_libdir}/%{name}-tests/auto/hiddenfolder
 %{_libdir}/libfilemanager.so
 
 %files tests
-%{_libdir}/%{name}-tests
-%{_datadir}/%{name}-tests/tests.xml
+/opt/tests/%{name}
+/opt/tests/%{name}/tests.xml
 
