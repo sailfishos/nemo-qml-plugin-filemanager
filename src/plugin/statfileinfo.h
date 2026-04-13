@@ -141,8 +141,8 @@ private:
     QMimeType m_mimeType;
     QFileInfo m_fileInfo;
     Sailfish::ArchiveInfo m_archiveInfo;
-    struct stat64 m_stat; // after following possible symlinks
-    struct stat64 m_lstat; // file itself without following symlinks
+    struct stat m_stat; // after following possible symlinks
+    struct stat m_lstat; // file itself without following symlinks
     bool m_selected;
 };
 

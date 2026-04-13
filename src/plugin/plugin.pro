@@ -15,6 +15,8 @@ contains(CONFIG, desktop) {
     DEFINES *= DESKTOP
 }
 
+DEFINES += _FILE_OFFSET_BITS=64
+
 QMAKE_CXXFLAGS += -Wparentheses -Werror -Wfatal-errors
 
 PKGCONFIG += KF5Archive
