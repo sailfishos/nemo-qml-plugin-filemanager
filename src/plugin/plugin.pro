@@ -19,7 +19,7 @@ DEFINES += _FILE_OFFSET_BITS=64
 
 QMAKE_CXXFLAGS += -Wparentheses -Werror -Wfatal-errors
 
-PKGCONFIG += KF5Archive
+PKGCONFIG += KF$${QT_MAJOR_VERSION}Archive
 
 # Drop any library linkage we dont actually need
 QMAKE_LFLAGS *= -Wl,--as-needed

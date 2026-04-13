@@ -145,10 +145,10 @@ QVariantMap DiskUsageWorker::calculate(QStringList paths)
     //  2. output(/home/<user>/)     = size(/home/<user>/)     - size(/home/<user>/foo/)
     //  3. output(/)               = size(/)               - size(/home/<user>/)
     QStringList keys;
-    foreach (const QString &key, usage.uniqueKeys()) {
+    foreach (const QString &key, usage.keys()) {
         keys << expandedPaths.value(key, key);
     }
-    qStableSort(keys.begin(), keys.end(), qGreater<QString>());
+    std::stable_sort(keys.begin(), keys.end());
     for (int i=0; i<keys.length(); i++) {
         for (int j=i+1; j<keys.length(); j++) {
             QString subpath = keys[i];
@@ -265,7 +265,8 @@ void DiskUsage::fileCount(const QString &path, QJSValue callback, DiskUsage::Fil
 void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
 {
     if (callback) {
-        QJSValue result = callback->call(QJSValueList() << callback->engine()->toScriptValue(usage));
+        auto engine = qjsEngine(this);
+        QJSValue result = callback->call(QJSValueList() << engine->toScriptValue(usage));
         if (result.isError()) {
             qCWarning(diskUsage) << "Error on diskusage callback" << result.toString();
         }
@@ -284,7 +285,8 @@ void DiskUsage::finished(QVariantMap usage, QJSValue *callback)
 void DiskUsage::countingFinished(int counter, QJSValue *callback)
 {
     if (callback) {
-        QJSValue result = callback->call(QJSValueList() << callback->engine()->toScriptValue(counter));
+        auto engine = qjsEngine(this);
+        QJSValue result = callback->call(QJSValueList() << engine->toScriptValue(counter));
         if (result.isError()) {
             qCWarning(diskUsage) << "Error on diskusage callback" << result.toString();
         }

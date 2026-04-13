@@ -110,7 +110,11 @@ public:
     qint64 size() const { return m_fileInfo.size(); }
     QDateTime lastModified() const { return m_fileInfo.lastModified(); }
     QDateTime lastAccessed() const { return m_fileInfo.lastRead(); }
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+    QDateTime created() const { return m_fileInfo.birthTime(); }
+#else
     QDateTime created() const { return m_fileInfo.created(); }
+#endif
     QString extension() const { return m_extension; }
     QString baseName() const { return m_baseName; }
     bool exists() const;

@@ -312,9 +312,17 @@ void ArchiveModelPrivate::scheduleExtract(const QString &entryName, const QStrin
     emit q->extractingChanged();
 
     if (mode == ExtractionMode::SingleFile) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        extractionWatcher->setFuture(QtConcurrent::run(&ArchiveModelPrivate::doExtractFile, this, entryName, path));
+#else
         extractionWatcher->setFuture(QtConcurrent::run(this, &ArchiveModelPrivate::doExtractFile, entryName, path));
+#endif
     } else {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        extractionWatcher->setFuture(QtConcurrent::run(&ArchiveModelPrivate::doExtractAllFiles, this, path));
+#else
         extractionWatcher->setFuture(QtConcurrent::run(this, &ArchiveModelPrivate::doExtractAllFiles, path));
+#endif
     }
 }
 
@@ -346,17 +354,29 @@ FileExtractionResult ArchiveModelPrivate::doExtractFile(const QString &entryName
     QString out;
     if (entry->isDirectory()) {
         const KArchiveDirectory *dir = static_cast<const KArchiveDirectory *>(entry);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        extracted = dir->copyTo(targetPath, true);
+#else
         extracted = dir->copyTo(targetPath, true, autoRename, &out);
+#endif
         qCDebug(lcArchiveLog) << "Extraction output directory:" << out;
     } else {
         const KArchiveFile *file = static_cast<const KArchiveFile *>(entry);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        extracted = file->copyTo(targetPath);
+#else
         extracted = file->copyTo(targetPath, autoRename, &out);
+#endif
         qCDebug(lcArchiveLog) << "Extracted out file:" << out;
     }
 
     if (extracted) {
         result.first = ArchiveModel::NoError;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        result.second = ExtractionInfo(entryName, targetPath);
+#else
         result.second = ExtractionInfo(entryName, out);
+#endif
     } else {
         result.first = ArchiveModel::ErrorArchiveExtractFailed;
     }
@@ -377,7 +397,11 @@ FileExtractionResult ArchiveModelPrivate::doExtractAllFiles(const QString &targe
     }
 
     QString out;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    if (dir->copyTo(targetPath, true)) {
+#else
     if (dir->copyTo(targetPath, true, true, &out)) {
+#endif
         result.first = ArchiveModel::NoError;
         result.second = ExtractionInfo("", out);
         qCDebug(lcArchiveLog) << "Extracted archive to:" << out;

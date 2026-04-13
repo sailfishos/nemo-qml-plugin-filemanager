@@ -90,7 +90,11 @@ quint64 DiskUsageWorker::calculateRpmSize(const QString &glob)
 
     quint64 result = 0L;
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    QStringList lines = QString::fromUtf8(rpm.readAll()).split('\n', Qt::SkipEmptyParts);
+#else
     QStringList lines = QString::fromUtf8(rpm.readAll()).split('\n', QString::SkipEmptyParts);
+#endif
     foreach (const QString &line, lines) {
         int index = line.indexOf('|');
         if (index == -1) {

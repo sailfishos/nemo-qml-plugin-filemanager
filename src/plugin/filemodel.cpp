@@ -729,7 +729,7 @@ void FileModel::update()
         emit selectedCountChanged();
     }
 
-    m_changedFlags = 0;
+    m_changedFlags = NothingChanged;
     m_dirty = false;
 }
 

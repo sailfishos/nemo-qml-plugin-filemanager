@@ -198,6 +198,7 @@ private slots:
 
 public:
     enum Changed {
+        NothingChanged                = 0,
         PathChanged                   = (1 << 0),
         SortByChanged                 = (1 << 1),
         SortOrderChanged              = (1 << 2),
