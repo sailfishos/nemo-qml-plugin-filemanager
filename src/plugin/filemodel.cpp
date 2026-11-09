@@ -39,6 +39,8 @@
 #include <QTimerEvent>
 #include <QUrl>
 
+#include <MDConfItem>
+
 #ifndef DESKTOP
 #include "synchronizelists.h"
 #endif
@@ -79,7 +81,7 @@ bool isDirAccessible(QString fileName)
     return false;
 }
 
-QVector<StatFileInfo> directoryEntries(const QDir &dir)
+QVector<StatFileInfo> directoryEntries(const QDir &dir, const QStringList &hiddenNames)
 {
     QVector<StatFileInfo> rv;
 
@@ -91,6 +93,9 @@ QVector<StatFileInfo> directoryEntries(const QDir &dir)
             // Workaround for QFile::copy() creating intermediate qt_temp.* file (see QTBUG-27601)
             continue;
         }
+        // /org/nemomobile/filemanager/hidden-names, matched as QDir globs.
+        if (QDir::match(hiddenNames, fileName))
+            continue;
         QString fullpath = dir.absoluteFilePath(fileName);
         StatFileInfo info(fullpath);
         rv.append(info);
@@ -117,10 +122,13 @@ FileModel::FileModel(QObject *parent)
     , m_dirty(false)
     , m_populated(false)
     , m_selectedCount(0)
+    , m_hiddenNamesConf(new MDConfItem(QStringLiteral("/org/nemomobile/filemanager/hidden-names"), this))
 {
     m_watcher = new QFileSystemWatcher(this);
     connect(m_watcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(scheduleContentChange()));
     connect(m_watcher, SIGNAL(fileChanged(const QString&)), this, SLOT(scheduleContentChange()));
+    m_hiddenNames = m_hiddenNamesConf->value().toStringList();
+    connect(m_hiddenNamesConf, SIGNAL(valueChanged()), this, SLOT(hiddenNamesChanged()));
 }
 
 FileModel::~FileModel()
@@ -470,6 +478,12 @@ void FileModel::refreshFull()
     scheduleUpdate();
 }
 
+void FileModel::hiddenNamesChanged()
+{
+    m_hiddenNames = m_hiddenNamesConf->value().toStringList();
+    scheduleUpdate(ContentChanged);
+}
+
 void FileModel::scheduleContentChange()
 {
     if (!m_active) {
@@ -529,7 +543,7 @@ void FileModel::readAllEntries()
     m_absolutePath = dir.absolutePath();
     m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
     m_parentPath = dir.isRoot() ? QString() : QDir::cleanPath(dir.absoluteFilePath(QStringLiteral("..")));
-    m_files = directoryEntries(dir);
+    m_files = directoryEntries(dir, m_hiddenNames);
 }
 
 void FileModel::refreshEntries()
@@ -555,7 +569,7 @@ void FileModel::refreshEntries()
         }
 
         // read all files
-        QVector<StatFileInfo> newFiles = directoryEntries(dir);
+        QVector<StatFileInfo> newFiles = directoryEntries(dir, m_hiddenNames);
 #ifdef DESKTOP
         m_files = newFiles;
 #else
