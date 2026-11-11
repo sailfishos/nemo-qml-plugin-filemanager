@@ -14,6 +14,7 @@ BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Test)
 BuildRequires:  pkgconfig(qt5-boostable)
 BuildRequires:  pkgconfig(KF5Archive)
+BuildRequires:  pkgconfig(mlite5)
 
 %description
 %{summary}.

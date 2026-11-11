@@ -39,7 +39,10 @@
 #include <QBasicTimer>
 #include <QDir>
 #include <QFileSystemWatcher>
+#include <QStringList>
 #include <QVector>
+
+class MDConfItem;
 
 /**
  * @brief The FileModel class can be used as a model in a ListView to display a list of files
@@ -195,6 +198,7 @@ signals:
 private slots:
     void readDirectory();
     void scheduleContentChange();
+    void hiddenNamesChanged();
 
 public:
     enum Changed {
@@ -249,6 +253,8 @@ private:
     bool m_populated;
     int m_selectedCount;
     QStringList m_nameFilters;
+    QStringList m_hiddenNames;
+    MDConfItem *m_hiddenNamesConf;
     QVector<StatFileInfo> m_files;
     QFileSystemWatcher *m_watcher;
     QBasicTimer m_timer;
