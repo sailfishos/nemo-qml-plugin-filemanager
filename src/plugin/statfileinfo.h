@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2026 Jolla Mobile Ltd
  * Copyright (C) 2016 Jolla Ltd.
- * Contact: Joona Petrell <joona.petrell@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -79,6 +79,9 @@ public:
     bool isSystem() const { return !S_ISDIR(m_lstat.st_mode) && !S_ISREG(m_lstat.st_mode) &&
                                    !S_ISLNK(m_lstat.st_mode); }
 
+    // is hidden, i.e. a dot file or has hidden attribute (on supported filesystems)
+    bool isHidden() const;
+
     // these inspect the file or if it is a symlink, then its target end point
 
     // directory
@@ -144,6 +147,7 @@ private:
     struct stat m_stat; // after following possible symlinks
     struct stat m_lstat; // file itself without following symlinks
     bool m_selected;
+    uint32_t m_fat_attrs;
 };
 
 bool operator==(const StatFileInfo &lhs, const StatFileInfo &rhs);

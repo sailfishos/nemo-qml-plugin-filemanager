@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2026 Jolla Mobile Ltd
  * Copyright (C) 2016 Jolla Ltd.
- * Contact: Joona Petrell <joona.petrell@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -79,7 +79,7 @@ bool isDirAccessible(QString fileName)
     return false;
 }
 
-QVector<StatFileInfo> directoryEntries(const QDir &dir)
+QVector<StatFileInfo> directoryEntries(const QDir &dir, bool includeHidden)
 {
     QVector<StatFileInfo> rv;
 
@@ -93,6 +93,9 @@ QVector<StatFileInfo> directoryEntries(const QDir &dir)
         }
         QString fullpath = dir.absoluteFilePath(fileName);
         StatFileInfo info(fullpath);
+        if (!includeHidden && info.isHidden()) {
+            continue;
+        }
         rv.append(info);
     }
 
@@ -529,7 +532,7 @@ void FileModel::readAllEntries()
     m_absolutePath = dir.absolutePath();
     m_directory = dir.isRoot() ? QStringLiteral("/") : dir.dirName();
     m_parentPath = dir.isRoot() ? QString() : QDir::cleanPath(dir.absoluteFilePath(QStringLiteral("..")));
-    m_files = directoryEntries(dir);
+    m_files = directoryEntries(dir, m_includeHiddenFiles);
 }
 
 void FileModel::refreshEntries()
@@ -555,7 +558,7 @@ void FileModel::refreshEntries()
         }
 
         // read all files
-        QVector<StatFileInfo> newFiles = directoryEntries(dir);
+        QVector<StatFileInfo> newFiles = directoryEntries(dir, m_includeHiddenFiles);
 #ifdef DESKTOP
         m_files = newFiles;
 #else

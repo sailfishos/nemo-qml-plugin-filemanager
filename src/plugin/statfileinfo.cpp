@@ -1,6 +1,6 @@
 /*
+ * Copyright (C) 2026 Jolla Mobile Ltd
  * Copyright (C) 2016 Jolla Ltd.
- * Contact: Joona Petrell <joona.petrell@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -32,16 +32,23 @@
 
 #include "statfileinfo.h"
 
+#include <fcntl.h>
+#include <linux/msdos_fs.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <QMimeDatabase>
 
 StatFileInfo::StatFileInfo()
     : m_selected(false)
+    , m_fat_attrs(0)
 {
     refresh();
 }
 
 StatFileInfo::StatFileInfo(QString fileName)
-    : m_fileName(fileName), m_selected(false)
+    : m_fileName(fileName)
+    , m_selected(false)
+    , m_fat_attrs(0)
 {
     refresh();
 }
@@ -56,6 +63,12 @@ void StatFileInfo::setFile(QString fileName)
         m_fileName = fileName;
         refresh();
     }
+}
+
+bool StatFileInfo::isHidden() const
+{
+    // having this here instead of the header because this requires kernel headers
+    return m_fileInfo.isHidden() || (m_fat_attrs & ATTR_HIDDEN) != 0;
 }
 
 bool StatFileInfo::exists() const
@@ -90,6 +103,7 @@ void StatFileInfo::refresh()
 {
     memset(&m_stat, 0, sizeof(m_stat));
     memset(&m_lstat, 0, sizeof(m_lstat));
+    m_fat_attrs = 0;
 
     m_fileInfo = QFileInfo(m_fileName);
     if (m_fileName.isEmpty()) {
@@ -137,6 +151,16 @@ void StatFileInfo::refresh()
         if (res != 0) { // if error, then set to undefined
             m_stat.st_mode = 0;
         }
+    }
+
+    // read fat attributes if they exist
+    int fd = open(fn, O_PATH);
+    if (fd >= 0) {
+        if (ioctl(fd, FAT_IOCTL_GET_ATTRIBUTES, &m_fat_attrs) == -1) {
+            m_fat_attrs = 0;
+        }
+        close(fd);
+        fd = -1;
     }
 
     fileChanged();
